@@ -1,0 +1,25 @@
+---
+name: test-generation
+description: Use this skill when the user asks to generate unit tests, XCTest cases, or test coverage for a ViewModel or other testable component. Triggers on phrases like "write tests for this ViewModel", "generate XCTest cases", "add test coverage".
+---
+
+# Test Generation Skill
+
+## When to use
+When the user asks for tests to be written for a ViewModel (or other component) — typically right after feature-generation, or against existing code.
+
+## Process
+1. Inspect the target ViewModel: its public inputs (methods/bindable properties) and outputs (published state, closures, delegate calls).
+2. Identify existing test conventions in the project (test target name, base test class, mocking style — protocol-based fakes vs a mocking library) and match them.
+3. Generate XCTest cases covering:
+   - **Success scenarios**: valid input → expected state/output change
+   - **Failure scenarios**: network/service errors, invalid input, empty/nil states → expected error state or fallback behavior
+   - **Edge cases**: empty lists, boundary values, rapid repeated calls (e.g. double-tap triggering duplicate requests) if relevant to the ViewModel's logic
+4. Use dependency injection to mock services/repositories the ViewModel depends on — never hit real network/DB in tests.
+5. Follow Arrange-Act-Assert structure in each test method.
+6. Name tests descriptively: `test_<method>_<condition>_<expectedResult>()`.
+
+## Guardrails
+- Don't test UIKit view code directly (not the ViewModel's job) — keep tests scoped to ViewModel/business logic.
+- Don't assert on implementation details (private state) — assert on observable outputs.
+- If the ViewModel isn't structured in a testable way (e.g. tight coupling, no DI), flag that instead of writing brittle tests around it.

@@ -1,0 +1,57 @@
+---
+description: SmartTaskManager iOS Project Rules
+alwaysApply: true
+---
+
+General Rules
+
+- Use Swift 6 syntax
+- Project uses UIKit only
+- Do not use SwiftUI
+- Follow MVVM architecture strictly
+- Follow existing project folder structure
+
+Architecture Rules
+
+- No API calls inside ViewController
+- No business logic inside ViewController
+- Separate View, ViewModel, Services, Models
+- One responsibility per class
+- ViewControllers handle UI only
+- Keep ViewControllers lightweight
+- ViewModels handle state management and business logic
+- Services handle business services and external integrations
+- All network communication must go through NetworkManager
+- Services communicate with NetworkManager only
+
+Code Quality Rules
+
+- Avoid force unwrap
+- Use guard statements for early exits
+- Use weak self inside closures when required
+- Follow Apple's API design guidelines
+- Keep code modular and reusable
+- Keep methods small and focused on single responsibility
+
+Networking Rules
+
+- Use URLSession for network calls
+- Centralize API logic inside NetworkManager
+- Handle success and failure cases for every network request
+- Parse JSON using Codable models
+- Implement retry logic for failed API calls when needed
+
+Project Specific Rules
+
+- Use constructor dependency injection
+- Do not create duplicate logic across files
+- Respect Confluence architecture documentation
+- Respect Jira ticket requirements before implementation
+- Generate production quality code only
+
+Testing Rules
+
+- Use XCTest for unit tests
+- Generate test cases primarily for ViewModels and Services
+- Cover success and failure scenarios in tests
+Do not use SwiftUI

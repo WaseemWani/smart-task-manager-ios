@@ -1,0 +1,49 @@
+---
+name: code-review
+description: Use this skill when the user asks to review generated or existing code, check for architecture violations, memory leaks, or SOLID/UIKit best practices. Triggers on phrases like "review this code", "check for memory leaks", "does this follow our architecture".
+---
+
+# Code Review Skill
+
+## When to use
+After code has been generated (e.g. by the feature-generation skill) or when the user pastes/references existing code and asks for a review.
+
+## What to check
+
+1. **Architecture violations**
+   - View contains business logic that belongs in ViewModel
+   - ViewModel directly touches UIKit (UIView, UIViewController, UIColor, etc.) — it shouldn't
+   - Layers bypassed (e.g. View calling Service/Network directly instead of going through ViewModel)
+   - Deviates from the project's Confluence-documented architecture rules
+
+2. **UIKit best practices**
+   - Auto Layout constraints activated correctly (no conflicting/ambiguous constraints)
+   - Cell reuse handled properly in UITableView/UICollectionView (no stale state)
+   - Heavy work not done on the main thread
+   - Correct use of `viewDidLoad` vs `viewWillAppear` vs `viewDidLayoutSubviews`
+
+3. **Memory leaks**
+   - Closures capturing `self` strongly where they should use `[weak self]` (delegates, completion handlers, Combine sinks, NotificationCenter observers)
+   - Delegate properties declared `weak` where appropriate
+   - Timers, observers, and listeners properly invalidated/removed in `deinit`
+   - Retain cycles between ViewModel and View/Coordinator
+
+4. **SOLID principles**
+   - **S**: classes/types have a single responsibility (flag "god" ViewModels or ViewControllers)
+   - **O**: extension points via protocols rather than modifying existing types
+   - **L**: subtypes substitutable without breaking behavior
+   - **I**: no bloated protocols forcing unused conformance
+   - **D**: dependencies injected via protocol, not concrete types hardcoded inside a class
+
+## Output format
+For each issue found, report:
+- **File/location**
+- **Category** (Architecture / UIKit / Memory / SOLID)
+- **Severity** (blocking / should-fix / nit)
+- **Suggested fix** (concise, not a full rewrite unless asked)
+
+If no issues are found in a category, say so explicitly rather than omitting it — confirms the check was actually done.
+
+## Guardrails
+- Don't rewrite the code unprompted; report and suggest, then wait for the user to ask for fixes to be applied.
+- Don't flag stylistic preferences as violations unless they conflict with documented project conventions.

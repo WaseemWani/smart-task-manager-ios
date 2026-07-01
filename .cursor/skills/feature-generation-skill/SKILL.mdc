@@ -1,0 +1,45 @@
+---
+name: feature-generation
+description: Use this skill when the user asks to implement, build, or scaffold a new feature from a Jira ticket, especially when it references Confluence architecture docs or UI specs. Triggers on phrases like "implement ticket XXX-123", "build the feature described in Jira", or "add a new screen/module per the architecture doc".
+---
+
+# Feature Generation Skill
+
+## When to use
+Trigger this skill whenever the user references a Jira ticket, a feature request tied to Confluence documentation, or asks to scaffold a new feature end-to-end in this iOS project.
+
+## Inputs required before starting
+Before writing any code, gather:
+1. **Jira ticket** — requirements, acceptance criteria, and any linked designs.
+2. **Confluence architecture rules** — the module's expected layering, naming conventions, and dependency rules.
+3. **Existing project folder structure** — inspect the repo to match existing conventions rather than inventing new ones.
+
+If any of these are missing or the user hasn't provided a ticket/doc link, ask for it before proceeding — do not assume requirements.
+
+## Process
+1. **Read the Jira ticket** (via MCP if connected, or from pasted content) and extract:
+   - Feature name and user-facing behavior
+   - Acceptance criteria
+   - Edge cases / error states mentioned
+2. **Read the Confluence architecture doc** and extract:
+   - Required layering (e.g. View → ViewModel → Service/Repository → Network/DB)
+   - Naming conventions (suffixes, folder naming)
+   - Any mandated patterns (dependency injection style, protocol-oriented boundaries, etc.)
+3. **Inspect the existing project structure** (`view` the repo) to find:
+   - Where similar features live (e.g. `Features/<FeatureName>/`)
+   - Existing base classes/protocols to reuse (e.g. `BaseViewController`, `ViewModelProtocol`)
+   - Existing patterns for networking, persistence, and DI container registration
+4. **Scaffold the feature following UIKit + MVVM**:
+   - `View`: `UIViewController` (or `UIView`) — no business logic, binds to ViewModel via closures/Combine/delegate (match whatever the project already uses)
+   - `ViewModel`: owns state and business logic, exposes bindable outputs, takes dependencies via initializer injection
+   - `Model`: plain data structures matching the Jira/API contract
+   - `Service`/`Repository` layer if the architecture doc requires one
+   - Wire into existing navigation/coordinator and DI setup
+5. **Match existing conventions exactly** — file naming, folder placement, access control, comment style, and test folder structure should mirror what's already in the repo.
+6. **Add unit tests** for the ViewModel if the project has an existing test target/pattern.
+7. **Summarize** what was created and flag any acceptance criteria that couldn't be fully implemented (e.g. missing design assets, ambiguous requirements) rather than silently guessing.
+
+## Guardrails
+- Don't invent architecture that contradicts the Confluence doc.
+- Don't create a new folder structure pattern if one already exists — extend it.
+- If the Jira ticket and Confluence doc conflict, flag it to the user instead of picking one silently.

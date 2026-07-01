@@ -1,0 +1,33 @@
+---
+name: bug-fixing
+description: Use this skill when the user references a bug ticket from Jira and wants the issue traced and fixed in the codebase. Triggers on phrases like "fix bug XXX-123", "investigate this issue from Jira", "why is this crashing/broken".
+---
+
+# Bug Fixing Skill
+
+## When to use
+When the user provides or references a Jira bug ticket and wants the root cause found and fixed.
+
+## Process
+1. **Read the bug ticket** — extract:
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Environment/device/OS version if relevant
+   - Any stack trace, crash log, or screenshot attached
+2. **Trace the issue in the codebase**:
+   - Locate the relevant screen/feature based on the ticket description
+   - Follow the data/control flow from View → ViewModel → Service to find where behavior diverges from expected
+   - Check recent related changes if git history/blame is available
+   - Reproduce the logic path mentally (or via a test) before proposing a fix
+3. **Identify root cause**, not just the symptom — state it explicitly before proposing a fix.
+4. **Suggest a minimal fix**:
+   - Change only what's needed to resolve the root cause
+   - Preserve existing architecture (MVVM boundaries, DI patterns, folder structure) — don't refactor unrelated code as part of a bug fix
+   - If the "correct" fix requires a larger architectural change, say so, but still propose the minimal safe patch first
+5. **Note regression risk** — mention any other code paths that touch the same logic and could be affected.
+6. Suggest a test case (or hand off to the test-generation skill) that would have caught this bug.
+
+## Guardrails
+- Never fix a bug by masking the symptom (e.g. force-unwrapping guards, silently swallowing errors) unless explicitly asked.
+- Don't touch unrelated files/formatting — keep the diff minimal and reviewable.
+- If root cause is unclear after tracing, say so and ask for more repro info rather than guessing.
