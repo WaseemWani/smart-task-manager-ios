@@ -88,12 +88,6 @@ final class SplashViewController: UIViewController {
         navigator.schedulePostSplashTransition(from: self)
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        guard traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) else { return }
-        configureUI()
-    }
-
     // MARK: - Setup
 
     private func setupViews() {
@@ -132,22 +126,22 @@ final class SplashViewController: UIViewController {
     }
 
     private func configureUI() {
-        view.backgroundColor = .appSplashBackground
+        view.backgroundColor = .appBackground
 
         logoImageView.image = UIImage(named: AppConstants.Assets.appLogo)
 
         appNameLabel.text = AppConstants.App.name
         appNameLabel.font = .systemFont(ofSize: 28, weight: .bold)
-        appNameLabel.textColor = .label
+        appNameLabel.textColor = .appOnSurface
 
         taglineLabel.text = AppConstants.App.tagline
         taglineLabel.font = .systemFont(ofSize: 17, weight: .regular)
-        taglineLabel.textColor = .secondaryLabel
+        taglineLabel.textColor = .appOutline
 
         versionLabel.text = AppConstants.App.versionLabel
         versionLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        versionLabel.textColor = .tertiaryLabel
+        versionLabel.textColor = .appOutline
 
-        loadingIndicator.color = .systemBlue
+        loadingIndicator.color = .appPrimary
     }
 }

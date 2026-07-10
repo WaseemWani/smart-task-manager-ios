@@ -8,6 +8,7 @@ Before generating code:
 - First analyze existing codebase
 - Do not create new files unless necessary
 - Reuse existing components
+- Do not guess missing requirements
 - Ask if requirements are ambiguous
 - Explain architecture decisions before coding
 - Prefer minimal code changes
