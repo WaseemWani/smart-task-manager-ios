@@ -92,6 +92,17 @@ final class LoginViewController: UIViewController {
         return indicator
     }()
 
+    private let loginErrorLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.caption()
+        label.textColor = .appError
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+
     private lazy var orDividerView = OrDividerView(title: AppConstants.Login.orDivider)
 
     private let continueAsGuestButton: UIButton = {
@@ -171,6 +182,7 @@ final class LoginViewController: UIViewController {
             forgotPasswordButton,
             loginButton,
             loginActivityIndicator,
+            loginErrorLabel,
             orDividerView,
             continueAsGuestButton
         ].forEach { formCardView.addSubview($0) }
@@ -233,7 +245,11 @@ final class LoginViewController: UIViewController {
             loginActivityIndicator.centerXAnchor.constraint(equalTo: loginButton.centerXAnchor),
             loginActivityIndicator.centerYAnchor.constraint(equalTo: loginButton.centerYAnchor),
 
-            orDividerView.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
+            loginErrorLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 8),
+            loginErrorLabel.leadingAnchor.constraint(equalTo: emailFieldView.leadingAnchor),
+            loginErrorLabel.trailingAnchor.constraint(equalTo: emailFieldView.trailingAnchor),
+
+            orDividerView.topAnchor.constraint(equalTo: loginErrorLabel.bottomAnchor, constant: 8),
             orDividerView.leadingAnchor.constraint(equalTo: emailFieldView.leadingAnchor),
             orDividerView.trailingAnchor.constraint(equalTo: emailFieldView.trailingAnchor),
 
@@ -331,6 +347,9 @@ final class LoginViewController: UIViewController {
 
         emailFieldView.setErrorMessage(state.emailError)
         passwordFieldView.setErrorMessage(state.passwordError)
+
+        loginErrorLabel.text = state.loginError
+        loginErrorLabel.isHidden = state.loginError == nil
 
         if state.isLoading {
             loginButton.setTitle(nil, for: .normal)

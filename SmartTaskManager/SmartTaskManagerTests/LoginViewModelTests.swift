@@ -100,6 +100,24 @@ final class LoginViewModelTests: XCTestCase {
         viewModel.updateEmail("user@example.com")
         XCTAssertNil(viewModel.state.emailError)
     }
+
+    func testLoginShowsAuthErrorMessage() {
+        validator.loginResult = .valid
+        authService.loginResult = .failure(.invalidCredentials)
+
+        viewModel.updateEmail("user@example.com")
+        viewModel.updatePassword("password123")
+        viewModel.login()
+
+        let expectation = expectation(description: "Auth failure handled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertEqual(self.viewModel.state.loginError, AppConstants.Auth.invalidCredentials)
+            XCTAssertFalse(self.viewModel.state.isLoading)
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1)
+    }
 }
 
 // MARK: - MockInputValidator
@@ -127,18 +145,26 @@ private final class MockAuthService: AuthServicing {
 
     var loginCallCount = 0
     var shouldCompleteImmediately = true
+    var loginResult: Result<AuthLoginResponse, AuthError> = .success(
+        AuthLoginResponse(
+            status: true,
+            message: AppConstants.Auth.loginSuccess,
+            token: "mock_session_token_test",
+            user: User(id: "1", name: "Demo User", email: "user@example.com")
+        )
+    )
 
     func login(
         email: String,
         password: String,
-        completion: @escaping (Result<Void, Error>) -> Void
+        completion: @escaping (Result<AuthLoginResponse, AuthError>) -> Void
     ) {
         loginCallCount += 1
 
         guard shouldCompleteImmediately else { return }
 
         DispatchQueue.main.async {
-            completion(.success(()))
+            completion(self.loginResult)
         }
     }
 }

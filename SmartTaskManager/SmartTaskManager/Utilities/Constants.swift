@@ -44,4 +44,13 @@ enum AppConstants {
         static let passwordRequired = "Password is required"
         static let passwordTooShort = "Password must be at least 8 characters"
     }
+
+    enum Auth {
+        static let loginSuccess = "Login successful"
+        static let invalidCredentials = "Invalid credentials"
+        static let requestTimedOut = "Request timed out. Please try again."
+        static let networkUnavailable = "Network unavailable. Check your connection and try again."
+        static let serverError = "Something went wrong. Please try again later."
+        static let unknownError = "Unable to sign in. Please try again."
+    }
 }

@@ -15,6 +15,7 @@ struct LoginViewState: Equatable {
     var isLoginEnabled: Bool = false
     var emailError: String?
     var passwordError: String?
+    var loginError: String?
     var isLoading: Bool = false
 }
 
@@ -54,12 +55,14 @@ final class LoginViewModel {
     func updateEmail(_ email: String) {
         state.email = email
         state.emailError = nil
+        state.loginError = nil
         updateLoginEnabledState()
     }
 
     func updatePassword(_ password: String) {
         state.password = password
         state.passwordError = nil
+        state.loginError = nil
         updateLoginEnabledState()
     }
 
@@ -76,6 +79,7 @@ final class LoginViewModel {
 
         state.isLoading = true
         state.isLoginEnabled = false
+        state.loginError = nil
 
         authService.login(email: state.email, password: state.password) { [weak self] result in
             DispatchQueue.main.async {
@@ -88,9 +92,8 @@ final class LoginViewModel {
                 case .success:
                     // TODO(STM-101): Navigate to task list after successful authentication.
                     break
-                case .failure:
-                    // TODO(STM-101): Surface authentication failure message to the UI.
-                    break
+                case .failure(let error):
+                    self.state.loginError = error.message
                 }
             }
         }
