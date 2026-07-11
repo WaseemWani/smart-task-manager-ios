@@ -84,6 +84,9 @@ enum AppConstants {
 
         enum Layout {
             static let marginMain: CGFloat = 16
+            static let topBarHeight: CGFloat = 44
+            static let headerTopSpacing: CGFloat = 24
+            static let headerBottomSpacing: CGFloat = 12
             static let gutterCard: CGFloat = 12
             static let stackGap: CGFloat = 8
             static let cardCornerRadius: CGFloat = 12
@@ -115,5 +118,12 @@ enum AppConstants {
         static let cancel = "Cancel"
         static let done = "Done"
         static let todayPrefix = "Today"
+
+        enum Layout {
+            static let pickerHeaderTopPadding: CGFloat = 16
+            static let pickerHeaderBottomPadding: CGFloat = 12
+            static let pickerDoneButtonHorizontalPadding: CGFloat = 20
+            static let pickerDoneButtonVerticalPadding: CGFloat = 10
+        }
     }
 }

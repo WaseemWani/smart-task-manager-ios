@@ -44,8 +44,8 @@ struct MainTabBarFactory: MainTabBarBuilding {
         let rootViewController = makeRootViewController(for: tab)
         let navigationController = UINavigationController(rootViewController: rootViewController)
         navigationController.tabBarItem = makeTabBarItem(for: tab)
-        navigationController.navigationBar.prefersLargeTitles = true
-        configureNavigationBarAppearance(for: navigationController)
+        navigationController.navigationBar.prefersLargeTitles = tab != .tasks
+        AppNavigationBarAppearance.apply(to: navigationController.navigationBar)
         return navigationController
     }
 
@@ -68,24 +68,5 @@ struct MainTabBarFactory: MainTabBarBuilding {
         )
         item.accessibilityIdentifier = tab.accessibilityIdentifier
         return item
-    }
-
-    private func configureNavigationBarAppearance(for navigationController: UINavigationController) {
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .appSurfaceLowest
-        appearance.titleTextAttributes = [
-            .foregroundColor: UIColor.appOnSurface,
-            .font: AppFont.button()
-        ]
-        appearance.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.appOnSurface,
-            .font: AppFont.title()
-        ]
-
-        navigationController.navigationBar.standardAppearance = appearance
-        navigationController.navigationBar.scrollEdgeAppearance = appearance
-        navigationController.navigationBar.compactAppearance = appearance
-        navigationController.navigationBar.tintColor = .appPrimary
     }
 }

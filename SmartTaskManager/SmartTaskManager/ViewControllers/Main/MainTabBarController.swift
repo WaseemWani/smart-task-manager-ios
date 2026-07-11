@@ -56,20 +56,20 @@ final class MainTabBarController: UITabBarController, MainTabCoordinating {
 
     private func configureAppearance() {
         let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .appSurfaceLowest
+        appearance.configureWithDefaultBackground()
+        appearance.backgroundColor = .appBackground.withAlphaComponent(0.8)
         appearance.shadowColor = .appOutlineVariantMuted
 
         let itemAppearance = UITabBarItemAppearance()
         itemAppearance.normal.iconColor = .appOutline
         itemAppearance.normal.titleTextAttributes = [
             .foregroundColor: UIColor.appOutline,
-            .font: AppFont.caption()
+            .font: AppFont.footnote()
         ]
         itemAppearance.selected.iconColor = .appPrimary
         itemAppearance.selected.titleTextAttributes = [
             .foregroundColor: UIColor.appPrimary,
-            .font: AppFont.caption()
+            .font: AppFont.footnote()
         ]
 
         appearance.stackedLayoutAppearance = itemAppearance

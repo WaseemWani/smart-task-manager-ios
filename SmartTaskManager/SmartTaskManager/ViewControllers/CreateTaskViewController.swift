@@ -80,13 +80,13 @@ final class CreateTaskViewController: UIViewController {
     private lazy var dateRowView = CreateTaskOptionRowView(
         iconName: "calendar",
         title: AppConstants.CreateTask.dateLabel,
-        iconTintColor: .appError
+        iconTintColor: .appStitchError
     )
 
     private lazy var priorityRowView = CreateTaskOptionRowView(
         iconName: "exclamationmark",
         title: AppConstants.CreateTask.priorityLabel,
-        iconTintColor: .appMediumPriorityBadgeText
+        iconTintColor: .appStitchTertiary
     )
 
     private let optionsSeparatorView: UIView = {
@@ -136,6 +136,13 @@ final class CreateTaskViewController: UIViewController {
         configureUI()
         bindViewModel()
         applyState(viewModel.state)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if let navigationBar = navigationController?.navigationBar {
+            AppNavigationBarAppearance.apply(to: navigationBar)
+        }
     }
 
     // MARK: - Setup
@@ -267,9 +274,8 @@ final class CreateTaskViewController: UIViewController {
         view.backgroundColor = .appBackground
         title = AppConstants.CreateTask.screenTitle
 
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "xmark"),
-            style: .plain,
+        navigationItem.rightBarButtonItem = AppNavigationBarAppearance.primaryBarButton(
+            systemName: "xmark",
             target: self,
             action: #selector(closeTapped)
         )
@@ -362,6 +368,31 @@ final class CreateTaskViewController: UIViewController {
         let pickerViewController = UIViewController()
         pickerViewController.view.backgroundColor = .appSurfaceLowest
 
+        let headerView = UIView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+
+        let clearButton = UIButton(type: .system)
+        clearButton.translatesAutoresizingMaskIntoConstraints = false
+        clearButton.setTitle(AppConstants.CreateTask.clearDate, for: .normal)
+        clearButton.titleLabel?.font = AppFont.body()
+        clearButton.setTitleColor(.appPrimary, for: .normal)
+        clearButton.addTarget(self, action: #selector(clearDateSelection), for: .touchUpInside)
+
+        let doneButton = UIButton(type: .system)
+        doneButton.translatesAutoresizingMaskIntoConstraints = false
+        doneButton.setTitle(AppConstants.CreateTask.done, for: .normal)
+        doneButton.titleLabel?.font = AppFont.button()
+        doneButton.setTitleColor(.appOnPrimary, for: .normal)
+        doneButton.backgroundColor = .appPrimary
+        doneButton.layer.cornerRadius = AppConstants.TaskList.Layout.cardCornerRadius
+        doneButton.contentEdgeInsets = UIEdgeInsets(
+            top: AppConstants.CreateTask.Layout.pickerDoneButtonVerticalPadding,
+            left: AppConstants.CreateTask.Layout.pickerDoneButtonHorizontalPadding,
+            bottom: AppConstants.CreateTask.Layout.pickerDoneButtonVerticalPadding,
+            right: AppConstants.CreateTask.Layout.pickerDoneButtonHorizontalPadding
+        )
+        doneButton.addTarget(self, action: #selector(confirmDateSelection), for: .touchUpInside)
+
         let datePicker = UIDatePicker()
         datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.datePickerMode = .date
@@ -372,34 +403,30 @@ final class CreateTaskViewController: UIViewController {
         }
         activeDatePicker = datePicker
 
-        let toolbar = UIToolbar()
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
-        toolbar.items = [
-            UIBarButtonItem(
-                title: AppConstants.CreateTask.clearDate,
-                style: .plain,
-                target: self,
-                action: #selector(clearDateSelection)
-            ),
-            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-            UIBarButtonItem(
-                title: AppConstants.CreateTask.done,
-                style: .done,
-                target: self,
-                action: #selector(confirmDateSelection)
-            )
-        ]
-        toolbar.sizeToFit()
-
-        pickerViewController.view.addSubview(toolbar)
+        headerView.addSubview(clearButton)
+        headerView.addSubview(doneButton)
+        pickerViewController.view.addSubview(headerView)
         pickerViewController.view.addSubview(datePicker)
 
-        NSLayoutConstraint.activate([
-            toolbar.topAnchor.constraint(equalTo: pickerViewController.view.safeAreaLayoutGuide.topAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: pickerViewController.view.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: pickerViewController.view.trailingAnchor),
+        let margin = AppConstants.TaskList.Layout.marginMain
+        let layout = AppConstants.CreateTask.Layout.self
 
-            datePicker.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+        NSLayoutConstraint.activate([
+            headerView.topAnchor.constraint(
+                equalTo: pickerViewController.view.safeAreaLayoutGuide.topAnchor,
+                constant: layout.pickerHeaderTopPadding
+            ),
+            headerView.leadingAnchor.constraint(equalTo: pickerViewController.view.leadingAnchor, constant: margin),
+            headerView.trailingAnchor.constraint(equalTo: pickerViewController.view.trailingAnchor, constant: -margin),
+            headerView.heightAnchor.constraint(equalToConstant: AppConstants.TaskList.Layout.optionRowHeight),
+
+            clearButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            clearButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+
+            doneButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            doneButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+
+            datePicker.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: layout.pickerHeaderBottomPadding),
             datePicker.leadingAnchor.constraint(equalTo: pickerViewController.view.leadingAnchor),
             datePicker.trailingAnchor.constraint(equalTo: pickerViewController.view.trailingAnchor),
             datePicker.bottomAnchor.constraint(equalTo: pickerViewController.view.safeAreaLayoutGuide.bottomAnchor)
@@ -512,7 +539,7 @@ extension CreateTaskViewController: UITextFieldDelegate {
         let currentText = textField.text ?? ""
         let updatedText = (currentText as NSString).replacingCharacters(in: range, with: string)
         viewModel.updateTitle(updatedText)
-        return true
+        return false
     }
 }
 

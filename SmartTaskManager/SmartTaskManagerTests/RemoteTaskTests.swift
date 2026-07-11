@@ -26,6 +26,51 @@ final class RemoteTaskTests: XCTestCase {
         XCTAssertEqual(remoteTask.toTask()?.priority, .high)
     }
 
+    func testRemoteTaskDecodesMissingID() throws {
+        let json = """
+        {
+          "userId": "1",
+          "title": "Prepare AI Demo",
+          "priority": "High",
+          "dueDate": "2026-07-20",
+          "isCompleted": false,
+          "createdAt": "2026-07-11T13:00:00Z",
+          "updatedAt": "2026-07-11T13:00:00Z"
+        }
+        """.data(using: .utf8)!
+
+        let remoteTask = try JSONDecoder().decode(RemoteTask.self, from: json)
+
+        XCTAssertFalse(remoteTask.id.isEmpty)
+        XCTAssertEqual(remoteTask.toTask()?.title, "Prepare AI Demo")
+    }
+
+    func testRemoteTaskArrayDecodesMockAPIPayload() throws {
+        let json = """
+        [
+          {
+            "userId": "1",
+            "title": "Prepare AI Demo",
+            "priority": "High",
+            "createdAt": "2026-07-11T13:00:00Z",
+            "updatedAt": "2026-07-11T13:00:00Z"
+          },
+          {
+            "id": "2",
+            "title": "Test Task",
+            "priority": "Medium",
+            "createdAt": "2026-07-10T19:03:53.195Z",
+            "updateAt": "2026-07-10T20:13:52.292Z"
+          }
+        ]
+        """.data(using: .utf8)!
+
+        let remoteTasks = try JSONDecoder().decode([RemoteTask].self, from: json)
+
+        XCTAssertEqual(remoteTasks.count, 2)
+        XCTAssertEqual(remoteTasks.compactMap { $0.toTask() }.count, 2)
+    }
+
     func testCreateTaskRequestEncodesExpectedPayload() throws {
         let request = CreateTaskRequest(
             userId: "1",

@@ -72,6 +72,12 @@ extension UIColor {
     /// Task card shadow color.
     static let appTaskCardShadow = UIColor.black.withAlphaComponent(0.08)
 
+    /// Stitch error token (#BA1A1A) — date icons, high-priority indicators.
+    static let appStitchError = appHighPriorityBadgeText
+
+    /// Stitch tertiary token (#894D00) — priority row icons.
+    static let appStitchTertiary = appMediumPriorityBadgeText
+
     @available(*, deprecated, renamed: "appBackground")
     static let appSplashBackground = appBackground
 }

@@ -76,15 +76,8 @@ struct RemoteTask: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        if let stringID = try? container.decode(String.self, forKey: .id) {
-            id = stringID
-        } else {
-            let intID = try container.decode(Int.self, forKey: .id)
-            id = String(intID)
-        }
-
-        userId = try container.decodeIfPresent(String.self, forKey: .userId)
         title = try container.decode(String.self, forKey: .title)
+        userId = try container.decodeIfPresent(String.self, forKey: .userId)
         description = try container.decodeIfPresent(String.self, forKey: .description)
         priority = try container.decode(String.self, forKey: .priority)
         dueDate = try container.decodeIfPresent(String.self, forKey: .dueDate)
@@ -92,6 +85,14 @@ struct RemoteTask: Decodable {
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
             ?? container.decodeIfPresent(String.self, forKey: .updateAt)
+
+        if let stringID = try container.decodeIfPresent(String.self, forKey: .id) {
+            id = stringID
+        } else if let intID = try container.decodeIfPresent(Int.self, forKey: .id) {
+            id = String(intID)
+        } else {
+            id = Self.fallbackID(title: title, createdAt: createdAt)
+        }
     }
 
     func toTask(referenceDate: Date = Date()) -> Task? {
@@ -112,5 +113,10 @@ struct RemoteTask: Decodable {
             createdAt: created,
             updatedAt: updated
         )
+    }
+
+    private static func fallbackID(title: String, createdAt: String?) -> String {
+        let timestamp = createdAt ?? ""
+        return "task-\(title)-\(timestamp)"
     }
 }

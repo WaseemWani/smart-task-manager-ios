@@ -10,6 +10,7 @@ final class TaskListViewController: UIViewController {
     // MARK: - Dependencies
 
     private let viewModel: TaskListViewModel
+    private let makeCreateTaskViewController: () -> CreateTaskViewController
 
     // MARK: - State
 
@@ -38,6 +39,37 @@ final class TaskListViewController: UIViewController {
 
     private let emptyStateView = EmptyStateView()
 
+    private let topBarView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        return view
+    }()
+
+    private let addButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        let configuration = UIImage.SymbolConfiguration(pointSize: 22, weight: .medium)
+        button.setImage(UIImage(systemName: "plus", withConfiguration: configuration), for: .normal)
+        button.tintColor = .appPrimary
+        return button
+    }()
+
+    private let screenHeaderView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private let screenTitleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.largeTitleMobile()
+        label.textColor = .appOnSurface
+        label.text = AppConstants.TaskList.screenTitle
+        return label
+    }()
+
     private let errorLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -60,8 +92,12 @@ final class TaskListViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(viewModel: TaskListViewModel = TaskListViewModel()) {
+    init(
+        viewModel: TaskListViewModel = TaskListViewModel(),
+        makeCreateTaskViewController: @escaping () -> CreateTaskViewController = { CreateTaskViewController() }
+    ) {
         self.viewModel = viewModel
+        self.makeCreateTaskViewController = makeCreateTaskViewController
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -81,9 +117,25 @@ final class TaskListViewController: UIViewController {
         applyState(viewModel.state)
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if navigationController?.topViewController !== self {
+            navigationController?.setNavigationBarHidden(false, animated: animated)
+        }
+    }
+
     // MARK: - Setup
 
     private func setupViews() {
+        view.addSubview(topBarView)
+        topBarView.addSubview(addButton)
+        view.addSubview(screenHeaderView)
+        screenHeaderView.addSubview(screenTitleLabel)
         view.addSubview(tableView)
         view.addSubview(activityIndicator)
         view.addSubview(emptyStateView)
@@ -94,14 +146,33 @@ final class TaskListViewController: UIViewController {
         tableView.register(TaskListCell.self, forCellReuseIdentifier: TaskListCell.reuseIdentifier)
 
         retryButton.addTarget(self, action: #selector(retryTapped), for: .touchUpInside)
+        addButton.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
     }
 
     private func setupConstraints() {
         let margin = AppConstants.TaskList.Layout.marginMain
+        let layout = AppConstants.TaskList.Layout.self
         let layoutGuide = view.safeAreaLayoutGuide
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
+            topBarView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
+            topBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            topBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topBarView.heightAnchor.constraint(equalToConstant: layout.topBarHeight),
+
+            addButton.trailingAnchor.constraint(equalTo: topBarView.trailingAnchor, constant: -margin),
+            addButton.centerYAnchor.constraint(equalTo: topBarView.centerYAnchor),
+
+            screenHeaderView.topAnchor.constraint(equalTo: topBarView.bottomAnchor, constant: layout.headerTopSpacing),
+            screenHeaderView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: margin),
+            screenHeaderView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -margin),
+
+            screenTitleLabel.topAnchor.constraint(equalTo: screenHeaderView.topAnchor),
+            screenTitleLabel.leadingAnchor.constraint(equalTo: screenHeaderView.leadingAnchor),
+            screenTitleLabel.trailingAnchor.constraint(equalTo: screenHeaderView.trailingAnchor),
+            screenTitleLabel.bottomAnchor.constraint(equalTo: screenHeaderView.bottomAnchor, constant: -layout.headerBottomSpacing),
+
+            tableView.topAnchor.constraint(equalTo: screenHeaderView.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: margin),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -margin),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -109,7 +180,7 @@ final class TaskListViewController: UIViewController {
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
 
-            emptyStateView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
+            emptyStateView.topAnchor.constraint(equalTo: screenHeaderView.bottomAnchor),
             emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -126,7 +197,6 @@ final class TaskListViewController: UIViewController {
 
     private func configureUI() {
         view.backgroundColor = .appBackground
-        title = AppConstants.TaskList.screenTitle
         retryButton.setTitleColor(.appPrimary, for: .normal)
     }
 
@@ -189,6 +259,24 @@ final class TaskListViewController: UIViewController {
     }
 
     // MARK: - Actions
+
+    @objc private func addTaskTapped() {
+        let createTaskViewController = makeCreateTaskViewController()
+        createTaskViewController.onTaskCreated = { [weak self] _ in
+            guard let self else { return }
+
+            self.dismiss(animated: true) {
+                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.createSuccess)
+                self.viewModel.loadTasks()
+            }
+        }
+
+        let navigationController = UINavigationController(rootViewController: createTaskViewController)
+        navigationController.modalPresentationStyle = .fullScreen
+        navigationController.navigationBar.prefersLargeTitles = false
+        AppNavigationBarAppearance.apply(to: navigationController.navigationBar)
+        present(navigationController, animated: true)
+    }
 
     @objc private func retryTapped() {
         viewModel.loadTasks()
