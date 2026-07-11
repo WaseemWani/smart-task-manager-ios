@@ -12,6 +12,9 @@ final class PriorityBadgeView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = AppFont.priorityBadge()
         label.textAlignment = .center
+        label.numberOfLines = 1
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        label.setContentHuggingPriority(.required, for: .horizontal)
         return label
     }()
 
@@ -20,6 +23,8 @@ final class PriorityBadgeView: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         layer.cornerRadius = AppConstants.TaskList.Layout.priorityBadgeCornerRadius
         layer.masksToBounds = true
+        setContentCompressionResistancePriority(.required, for: .horizontal)
+        setContentHuggingPriority(.required, for: .horizontal)
         setupViews()
     }
 
