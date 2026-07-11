@@ -58,4 +58,10 @@ enum AppConstants {
         static let sessionToken = "stm.session.token"
         static let currentUser = "stm.session.currentUser"
     }
+
+    enum Tabs {
+        static let tasksTitle = "Tasks"
+        static let aiAssistantTitle = "AI Assistant"
+        static let profileTitle = "Profile"
+    }
 }

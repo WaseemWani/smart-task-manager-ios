@@ -17,19 +17,19 @@ final class SplashNavigator: SplashNavigating {
 
     private let delay: TimeInterval
     private let sessionManager: SessionManaging
+    private let tabBarFactory: MainTabBarBuilding
     private let makeLoginViewController: () -> UIViewController
-    private let makeHomeViewController: () -> UIViewController
 
     init(
         delay: TimeInterval = AppConstants.Splash.displayDuration,
         sessionManager: SessionManaging = SessionManager(),
-        makeLoginViewController: @escaping () -> UIViewController = { LoginViewController() },
-        makeHomeViewController: @escaping () -> UIViewController = { TaskListViewController() }
+        tabBarFactory: MainTabBarBuilding = MainTabBarFactory(),
+        makeLoginViewController: @escaping () -> UIViewController = { LoginViewController() }
     ) {
         self.delay = delay
         self.sessionManager = sessionManager
+        self.tabBarFactory = tabBarFactory
         self.makeLoginViewController = makeLoginViewController
-        self.makeHomeViewController = makeHomeViewController
     }
 
     func schedulePostSplashTransition(from viewController: UIViewController) {
@@ -37,7 +37,7 @@ final class SplashNavigator: SplashNavigating {
             guard let self, let viewController else { return }
 
             let destination = self.sessionManager.isLoggedIn
-                ? self.makeHomeViewController()
+                ? self.tabBarFactory.makeMainTabBarController()
                 : self.makeLoginViewController()
 
             viewController.replaceRoot(with: destination, animated: true)

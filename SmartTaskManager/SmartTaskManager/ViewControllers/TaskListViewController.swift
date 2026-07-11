@@ -12,6 +12,6 @@ final class TaskListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .appBackground
-        title = "Tasks"
+        title = AppConstants.Tabs.tasksTitle
     }
 }

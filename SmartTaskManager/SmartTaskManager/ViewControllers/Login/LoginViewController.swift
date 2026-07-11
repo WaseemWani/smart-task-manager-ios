@@ -10,7 +10,7 @@ final class LoginViewController: UIViewController {
     // MARK: - Dependencies
 
     private let viewModel: LoginViewModel
-    private let makeHomeViewController: () -> UIViewController
+    private let tabBarFactory: MainTabBarBuilding
 
     // MARK: - UI
 
@@ -144,10 +144,10 @@ final class LoginViewController: UIViewController {
 
     init(
         viewModel: LoginViewModel = LoginViewModel(),
-        makeHomeViewController: @escaping () -> UIViewController = { TaskListViewController() }
+        tabBarFactory: MainTabBarBuilding = MainTabBarFactory()
     ) {
         self.viewModel = viewModel
-        self.makeHomeViewController = makeHomeViewController
+        self.tabBarFactory = tabBarFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -347,7 +347,8 @@ final class LoginViewController: UIViewController {
 
         viewModel.onLoginSuccess = { [weak self] in
             guard let self else { return }
-            self.replaceRoot(with: self.makeHomeViewController(), animated: true)
+            let mainTabBarController = self.tabBarFactory.makeMainTabBarController()
+            self.replaceRoot(with: mainTabBarController, animated: true)
         }
     }
 
