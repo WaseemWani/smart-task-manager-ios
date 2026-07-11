@@ -96,6 +96,24 @@ enum AppConstants {
             static let dueDateIconSize: CGFloat = 16
             static let cardShadowRadius: CGFloat = 12
             static let cardShadowYOffset: CGFloat = 4
+            static let optionRowHeight: CGFloat = 44
+            static let saveButtonHeight: CGFloat = 50
         }
+    }
+
+    enum CreateTask {
+        static let screenTitle = "New Task"
+        static let titlePlaceholder = "Title"
+        static let descriptionPlaceholder = "Description"
+        static let dateLabel = "Date"
+        static let priorityLabel = "Priority"
+        static let selectDate = "Select date"
+        static let selectPriority = "Select priority"
+        static let saveButton = "Save Task"
+        static let clearDate = "Clear Date"
+        static let clearPriority = "Clear Priority"
+        static let cancel = "Cancel"
+        static let done = "Done"
+        static let todayPrefix = "Today"
     }
 }

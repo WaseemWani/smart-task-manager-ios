@@ -50,4 +50,29 @@ enum TaskDueDatePresenter {
             systemIconName: "calendar"
         )
     }
+
+    static func formDisplay(for dueDate: Date?, referenceDate: Date = Date()) -> (text: String, isPlaceholder: Bool) {
+        guard let dueDate else {
+            return (AppConstants.CreateTask.selectDate, true)
+        }
+
+        let calendar = Calendar.current
+        let monthDay = monthDayFormatter.string(from: dueDate)
+
+        if calendar.isDateInToday(dueDate) {
+            return ("\(AppConstants.CreateTask.todayPrefix), \(monthDay)", false)
+        }
+
+        if calendar.isDateInTomorrow(dueDate) {
+            return ("\(AppConstants.TaskList.tomorrow), \(monthDay)", false)
+        }
+
+        return (monthDayFormatter.string(from: dueDate), false)
+    }
+
+    private static let monthDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("MMMd")
+        return formatter
+    }()
 }

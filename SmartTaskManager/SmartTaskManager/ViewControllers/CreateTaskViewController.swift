@@ -2,11 +2,526 @@
 //  CreateTaskViewController.swift
 //  SmartTaskManager
 //
-//  Created by Waseem Wani on 01/07/26.
-//
 
 import UIKit
 
 final class CreateTaskViewController: UIViewController {
-    
+
+    // MARK: - Callbacks
+
+    var onTaskCreated: ((Task) -> Void)?
+
+    // MARK: - Dependencies
+
+    private let viewModel: CreateTaskViewModel
+
+    // MARK: - UI
+
+    private let scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        scrollView.keyboardDismissMode = .onDrag
+        return scrollView
+    }()
+
+    private let contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private let detailsCardView = UIView()
+    private let optionsCardView = UIView()
+
+    private let titleTextField: UITextField = {
+        let textField = UITextField()
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.font = AppFont.headline()
+        textField.textColor = .appOnSurface
+        textField.placeholder = AppConstants.CreateTask.titlePlaceholder
+        textField.borderStyle = .none
+        textField.returnKeyType = .next
+        return textField
+    }()
+
+    private let titleSeparatorView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private let descriptionTextView: UITextView = {
+        let textView = UITextView()
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.font = AppFont.input()
+        textView.textColor = .appOnSurface
+        textView.backgroundColor = .clear
+        textView.isScrollEnabled = false
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        return textView
+    }()
+
+    private let descriptionPlaceholderLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.input()
+        label.textColor = .appOutline
+        label.text = AppConstants.CreateTask.descriptionPlaceholder
+        return label
+    }()
+
+    private let titleErrorLabel = CreateTaskViewController.makeErrorLabel()
+    private let dueDateErrorLabel = CreateTaskViewController.makeErrorLabel()
+    private let priorityErrorLabel = CreateTaskViewController.makeErrorLabel()
+    private let submitErrorLabel = CreateTaskViewController.makeErrorLabel()
+
+    private lazy var dateRowView = CreateTaskOptionRowView(
+        iconName: "calendar",
+        title: AppConstants.CreateTask.dateLabel,
+        iconTintColor: .appError
+    )
+
+    private lazy var priorityRowView = CreateTaskOptionRowView(
+        iconName: "exclamationmark",
+        title: AppConstants.CreateTask.priorityLabel,
+        iconTintColor: .appMediumPriorityBadgeText
+    )
+
+    private let optionsSeparatorView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private let saveButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.titleLabel?.font = AppFont.button()
+        button.setTitle(AppConstants.CreateTask.saveButton, for: .normal)
+        button.layer.cornerRadius = AppConstants.TaskList.Layout.cardCornerRadius
+        button.isEnabled = false
+        return button
+    }()
+
+    private let saveActivityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        indicator.color = .appOnPrimary
+        return indicator
+    }()
+
+    private var activeDatePicker: UIDatePicker?
+
+    // MARK: - Initialization
+
+    init(viewModel: CreateTaskViewModel = CreateTaskViewModel()) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    // MARK: - Lifecycle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupViews()
+        setupConstraints()
+        configureUI()
+        bindViewModel()
+        applyState(viewModel.state)
+    }
+
+    // MARK: - Setup
+
+    private func setupViews() {
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+
+        [detailsCardView, optionsCardView, saveButton].forEach { contentView.addSubview($0) }
+
+        detailsCardView.addSubview(titleTextField)
+        detailsCardView.addSubview(titleSeparatorView)
+        detailsCardView.addSubview(descriptionTextView)
+        detailsCardView.addSubview(descriptionPlaceholderLabel)
+
+        optionsCardView.addSubview(dateRowView)
+        optionsCardView.addSubview(optionsSeparatorView)
+        optionsCardView.addSubview(priorityRowView)
+
+        [
+            titleErrorLabel,
+            dueDateErrorLabel,
+            priorityErrorLabel,
+            submitErrorLabel
+        ].forEach { contentView.addSubview($0) }
+
+        saveButton.addSubview(saveActivityIndicator)
+
+        titleTextField.delegate = self
+        descriptionTextView.delegate = self
+
+        dateRowView.addTarget(self, action: #selector(dateRowTapped), for: .touchUpInside)
+        priorityRowView.addTarget(self, action: #selector(priorityRowTapped), for: .touchUpInside)
+        saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+
+        styleCard(detailsCardView)
+        styleCard(optionsCardView)
+    }
+
+    private func setupConstraints() {
+        let margin = AppConstants.TaskList.Layout.marginMain
+        let gutter = AppConstants.TaskList.Layout.gutterCard
+        let stackGap = AppConstants.TaskList.Layout.stackGap
+        let layoutGuide = view.safeAreaLayoutGuide
+        let contentLayoutGuide = scrollView.contentLayoutGuide
+        let frameLayoutGuide = scrollView.frameLayoutGuide
+
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: layoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            contentView.topAnchor.constraint(equalTo: contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: frameLayoutGuide.widthAnchor),
+
+            detailsCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            detailsCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            detailsCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+
+            titleTextField.topAnchor.constraint(equalTo: detailsCardView.topAnchor, constant: gutter),
+            titleTextField.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor, constant: gutter),
+            titleTextField.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor, constant: -gutter),
+
+            titleSeparatorView.topAnchor.constraint(equalTo: titleTextField.bottomAnchor, constant: gutter),
+            titleSeparatorView.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor, constant: gutter),
+            titleSeparatorView.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor, constant: -gutter),
+            titleSeparatorView.heightAnchor.constraint(equalToConstant: 1),
+
+            descriptionTextView.topAnchor.constraint(equalTo: titleSeparatorView.bottomAnchor, constant: gutter),
+            descriptionTextView.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor, constant: gutter),
+            descriptionTextView.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor, constant: -gutter),
+            descriptionTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
+            descriptionTextView.bottomAnchor.constraint(equalTo: detailsCardView.bottomAnchor, constant: -gutter),
+
+            descriptionPlaceholderLabel.topAnchor.constraint(equalTo: descriptionTextView.topAnchor),
+            descriptionPlaceholderLabel.leadingAnchor.constraint(equalTo: descriptionTextView.leadingAnchor),
+            descriptionPlaceholderLabel.trailingAnchor.constraint(equalTo: descriptionTextView.trailingAnchor),
+
+            titleErrorLabel.topAnchor.constraint(equalTo: detailsCardView.bottomAnchor, constant: 4),
+            titleErrorLabel.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor),
+            titleErrorLabel.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor),
+
+            optionsCardView.topAnchor.constraint(equalTo: titleErrorLabel.bottomAnchor, constant: stackGap * 2),
+            optionsCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            optionsCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+
+            dateRowView.topAnchor.constraint(equalTo: optionsCardView.topAnchor),
+            dateRowView.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor, constant: gutter),
+            dateRowView.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor, constant: -gutter),
+
+            optionsSeparatorView.topAnchor.constraint(equalTo: dateRowView.bottomAnchor),
+            optionsSeparatorView.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor, constant: gutter),
+            optionsSeparatorView.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor, constant: -gutter),
+            optionsSeparatorView.heightAnchor.constraint(equalToConstant: 1),
+
+            priorityRowView.topAnchor.constraint(equalTo: optionsSeparatorView.bottomAnchor),
+            priorityRowView.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor, constant: gutter),
+            priorityRowView.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor, constant: -gutter),
+            priorityRowView.bottomAnchor.constraint(equalTo: optionsCardView.bottomAnchor),
+
+            dueDateErrorLabel.topAnchor.constraint(equalTo: optionsCardView.bottomAnchor, constant: 4),
+            dueDateErrorLabel.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor),
+            dueDateErrorLabel.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor),
+
+            priorityErrorLabel.topAnchor.constraint(equalTo: dueDateErrorLabel.bottomAnchor, constant: 2),
+            priorityErrorLabel.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor),
+            priorityErrorLabel.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor),
+
+            submitErrorLabel.topAnchor.constraint(equalTo: priorityErrorLabel.bottomAnchor, constant: stackGap),
+            submitErrorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            submitErrorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+
+            saveButton.topAnchor.constraint(equalTo: submitErrorLabel.bottomAnchor, constant: 24),
+            saveButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+            saveButton.heightAnchor.constraint(equalToConstant: AppConstants.TaskList.Layout.saveButtonHeight),
+            saveButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -margin),
+
+            saveActivityIndicator.centerXAnchor.constraint(equalTo: saveButton.centerXAnchor),
+            saveActivityIndicator.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor)
+        ])
+    }
+
+    private func configureUI() {
+        view.backgroundColor = .appBackground
+        title = AppConstants.CreateTask.screenTitle
+
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "xmark"),
+            style: .plain,
+            target: self,
+            action: #selector(closeTapped)
+        )
+
+        titleSeparatorView.backgroundColor = .appOutlineVariantMuted
+        optionsSeparatorView.backgroundColor = .appOutlineVariantMuted
+
+        saveButton.backgroundColor = .appPrimary
+        saveButton.setTitleColor(.appOnPrimary, for: .normal)
+        saveButton.setTitleColor(.appOnPrimary.withAlphaComponent(0.6), for: .disabled)
+
+        configurePlaceholder(for: titleTextField)
+
+        updateDateRow(date: nil)
+        priorityRowView.setPriority(nil)
+    }
+
+    private func bindViewModel() {
+        viewModel.onStateChange = { [weak self] state in
+            self?.applyState(state)
+        }
+
+        viewModel.onCreateSuccess = { [weak self] task in
+            self?.onTaskCreated?(task)
+        }
+    }
+
+    // MARK: - State
+
+    private func applyState(_ state: CreateTaskViewState) {
+        if titleTextField.text != state.title {
+            titleTextField.text = state.title
+        }
+
+        if descriptionTextView.text != state.description {
+            descriptionTextView.text = state.description
+        }
+        descriptionPlaceholderLabel.isHidden = !state.description.isEmpty
+
+        updateDateRow(date: state.dueDate)
+        priorityRowView.setPriority(state.priority)
+
+        titleErrorLabel.text = state.titleError
+        titleErrorLabel.isHidden = state.titleError == nil
+
+        dueDateErrorLabel.text = state.dueDateError
+        dueDateErrorLabel.isHidden = state.dueDateError == nil
+
+        priorityErrorLabel.text = state.priorityError
+        priorityErrorLabel.isHidden = state.priorityError == nil
+
+        submitErrorLabel.text = state.submitError
+        submitErrorLabel.isHidden = state.submitError == nil
+
+        saveButton.isEnabled = state.isSaveEnabled
+
+        if state.isLoading {
+            saveActivityIndicator.startAnimating()
+            saveButton.setTitle(nil, for: .normal)
+        } else {
+            saveActivityIndicator.stopAnimating()
+            saveButton.setTitle(AppConstants.CreateTask.saveButton, for: .normal)
+        }
+    }
+
+    // MARK: - Actions
+
+    @objc private func closeTapped() {
+        dismiss(animated: true)
+    }
+
+    @objc private func saveTapped() {
+        view.endEditing(true)
+        viewModel.saveTask()
+    }
+
+    @objc private func dateRowTapped() {
+        view.endEditing(true)
+        presentDatePicker()
+    }
+
+    @objc private func priorityRowTapped() {
+        view.endEditing(true)
+        presentPriorityPicker()
+    }
+
+    // MARK: - Pickers
+
+    private func presentDatePicker() {
+        let pickerViewController = UIViewController()
+        pickerViewController.view.backgroundColor = .appSurfaceLowest
+
+        let datePicker = UIDatePicker()
+        datePicker.translatesAutoresizingMaskIntoConstraints = false
+        datePicker.datePickerMode = .date
+        datePicker.preferredDatePickerStyle = .wheels
+        datePicker.minimumDate = Calendar.current.startOfDay(for: Date())
+        if let dueDate = viewModel.state.dueDate {
+            datePicker.date = dueDate
+        }
+        activeDatePicker = datePicker
+
+        let toolbar = UIToolbar()
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.items = [
+            UIBarButtonItem(
+                title: AppConstants.CreateTask.clearDate,
+                style: .plain,
+                target: self,
+                action: #selector(clearDateSelection)
+            ),
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            UIBarButtonItem(
+                title: AppConstants.CreateTask.done,
+                style: .done,
+                target: self,
+                action: #selector(confirmDateSelection)
+            )
+        ]
+        toolbar.sizeToFit()
+
+        pickerViewController.view.addSubview(toolbar)
+        pickerViewController.view.addSubview(datePicker)
+
+        NSLayoutConstraint.activate([
+            toolbar.topAnchor.constraint(equalTo: pickerViewController.view.safeAreaLayoutGuide.topAnchor),
+            toolbar.leadingAnchor.constraint(equalTo: pickerViewController.view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: pickerViewController.view.trailingAnchor),
+
+            datePicker.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            datePicker.leadingAnchor.constraint(equalTo: pickerViewController.view.leadingAnchor),
+            datePicker.trailingAnchor.constraint(equalTo: pickerViewController.view.trailingAnchor),
+            datePicker.bottomAnchor.constraint(equalTo: pickerViewController.view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+
+        pickerViewController.modalPresentationStyle = .pageSheet
+        if let sheet = pickerViewController.sheetPresentationController {
+            sheet.detents = [.medium()]
+        }
+
+        present(pickerViewController, animated: true)
+    }
+
+    private func presentPriorityPicker() {
+        let alert = UIAlertController(title: AppConstants.CreateTask.priorityLabel, message: nil, preferredStyle: .actionSheet)
+
+        TaskPriority.allCases.forEach { priority in
+            alert.addAction(UIAlertAction(title: priority.displayTitle, style: .default) { [weak self] _ in
+                self?.viewModel.updatePriority(priority)
+            })
+        }
+
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.clearPriority, style: .destructive) { [weak self] _ in
+            self?.viewModel.updatePriority(nil)
+        })
+
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.cancel, style: .cancel))
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = priorityRowView
+            popover.sourceRect = priorityRowView.bounds
+        }
+
+        present(alert, animated: true)
+    }
+
+    @objc private func confirmDateSelection() {
+        if let picker = activeDatePicker {
+            viewModel.updateDueDate(picker.date)
+        }
+        activeDatePicker = nil
+        dismiss(animated: true)
+    }
+
+    @objc private func clearDateSelection() {
+        viewModel.updateDueDate(nil)
+        activeDatePicker = nil
+        dismiss(animated: true)
+    }
+
+    // MARK: - Helpers
+
+    private func updateDateRow(date: Date?) {
+        let display = TaskDueDatePresenter.formDisplay(for: date)
+        dateRowView.setValueText(display.text, isPlaceholder: display.isPlaceholder)
+    }
+
+    private func styleCard(_ cardView: UIView) {
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        cardView.backgroundColor = .appSurfaceLowest
+        cardView.layer.cornerRadius = AppConstants.TaskList.Layout.cardCornerRadius
+        cardView.layer.borderWidth = 1
+        cardView.layer.borderColor = UIColor.appTaskCardBorder.cgColor
+        cardView.layer.shadowColor = UIColor.appTaskCardShadow.cgColor
+        cardView.layer.shadowOpacity = 1
+        cardView.layer.shadowRadius = AppConstants.TaskList.Layout.cardShadowRadius
+        cardView.layer.shadowOffset = CGSize(
+            width: 0,
+            height: AppConstants.TaskList.Layout.cardShadowYOffset
+        )
+        cardView.layer.masksToBounds = false
+    }
+
+    private func configurePlaceholder(for textField: UITextField) {
+        textField.attributedPlaceholder = NSAttributedString(
+            string: AppConstants.CreateTask.titlePlaceholder,
+            attributes: [.foregroundColor: UIColor.appOutline]
+        )
+    }
+
+    private static func makeErrorLabel() -> UILabel {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.caption()
+        label.textColor = .appError
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }
+}
+
+// MARK: - UITextFieldDelegate
+
+extension CreateTaskViewController: UITextFieldDelegate {
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        descriptionTextView.becomeFirstResponder()
+        return true
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        viewModel.updateTitle(textField.text ?? "")
+    }
+
+    func textField(
+        _ textField: UITextField,
+        shouldChangeCharactersIn range: NSRange,
+        replacementString string: String
+    ) -> Bool {
+        let currentText = textField.text ?? ""
+        let updatedText = (currentText as NSString).replacingCharacters(in: range, with: string)
+        viewModel.updateTitle(updatedText)
+        return true
+    }
+}
+
+// MARK: - UITextViewDelegate
+
+extension CreateTaskViewController: UITextViewDelegate {
+
+    func textViewDidChange(_ textView: UITextView) {
+        viewModel.updateDescription(textView.text)
+        descriptionPlaceholderLabel.isHidden = !textView.text.isEmpty
+    }
 }
