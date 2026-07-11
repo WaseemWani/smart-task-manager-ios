@@ -18,6 +18,10 @@ protocol TaskServicing {
         input: CreateTaskInput,
         completion: @escaping (Result<Task, TaskError>) -> Void
     )
+    func deleteTask(
+        task: Task,
+        completion: @escaping (Result<Void, TaskError>) -> Void
+    )
 }
 
 // MARK: - TaskService
@@ -121,6 +125,33 @@ final class TaskService: TaskServicing {
                 completion(.success(updatedTask))
             case .failure(let error):
                 completion(.failure(Self.mapNetworkError(error, fallback: .updateFailed)))
+            }
+        }
+    }
+
+    func deleteTask(
+        task: Task,
+        completion: @escaping (Result<Void, TaskError>) -> Void
+    ) {
+        guard let serverID = task.serverID else {
+            completion(.failure(.taskNotDeletable))
+            return
+        }
+
+        guard sessionManager.currentSession != nil else {
+            completion(.failure(.notLoggedIn))
+            return
+        }
+
+        networkManager.request(
+            endpoint: .deleteTask(id: serverID),
+            responseType: RemoteTask.self
+        ) { result in
+            switch result {
+            case .success:
+                completion(.success(()))
+            case .failure(let error):
+                completion(.failure(Self.mapNetworkError(error, fallback: .deleteFailed)))
             }
         }
     }

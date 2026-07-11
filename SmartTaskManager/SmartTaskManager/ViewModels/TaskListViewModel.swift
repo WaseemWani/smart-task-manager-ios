@@ -54,7 +54,28 @@ final class TaskListViewModel {
         }
     }
 
+    func deleteTask(_ task: Task, completion: @escaping (Result<Void, TaskError>) -> Void) {
+        taskService.deleteTask(task: task) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                if case .success = result {
+                    self.removeTaskFromState(task)
+                }
+
+                completion(result)
+            }
+        }
+    }
+
     // MARK: - Private
+
+    private func removeTaskFromState(_ task: Task) {
+        guard case .loaded(var tasks) = state else { return }
+
+        tasks.removeAll { $0.id == task.id }
+        state = tasks.isEmpty ? .empty : .loaded(tasks)
+    }
 
     private func handleFetchResult(_ result: Result<[Task], TaskError>) {
         switch result {

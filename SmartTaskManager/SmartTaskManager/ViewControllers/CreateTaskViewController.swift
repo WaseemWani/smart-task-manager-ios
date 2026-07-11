@@ -11,6 +11,7 @@ final class CreateTaskViewController: UIViewController {
 
     var onTaskCreated: ((Task) -> Void)?
     var onTaskUpdated: ((Task) -> Void)?
+    var onTaskDeleted: (() -> Void)?
 
     // MARK: - Dependencies
 
@@ -285,6 +286,17 @@ final class CreateTaskViewController: UIViewController {
             action: #selector(closeTapped)
         )
 
+        if viewModel.isEditing {
+            let deleteItem = UIBarButtonItem(
+                image: UIImage(systemName: "trash"),
+                style: .plain,
+                target: self,
+                action: #selector(deleteTapped)
+            )
+            deleteItem.tintColor = .appError
+            navigationItem.leftBarButtonItem = deleteItem
+        }
+
         titleSeparatorView.backgroundColor = .appOutlineVariantMuted
         optionsSeparatorView.backgroundColor = .appOutlineVariantMuted
 
@@ -311,6 +323,10 @@ final class CreateTaskViewController: UIViewController {
 
         viewModel.onUpdateSuccess = { [weak self] task in
             self?.onTaskUpdated?(task)
+        }
+
+        viewModel.onDeleteSuccess = { [weak self] in
+            self?.onTaskDeleted?()
         }
     }
 
@@ -356,6 +372,12 @@ final class CreateTaskViewController: UIViewController {
 
     @objc private func closeTapped() {
         dismiss(animated: true)
+    }
+
+    @objc private func deleteTapped() {
+        presentDeleteConfirmation { [weak self] in
+            self?.viewModel.deleteTask()
+        }
     }
 
     @objc private func saveTapped() {
@@ -496,6 +518,19 @@ final class CreateTaskViewController: UIViewController {
     }
 
     // MARK: - Helpers
+
+    private func presentDeleteConfirmation(handler: @escaping () -> Void) {
+        let alert = UIAlertController(
+            title: AppConstants.TaskList.deleteConfirmTitle,
+            message: AppConstants.TaskList.deleteConfirmMessage,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: AppConstants.TaskList.deleteAction, style: .destructive) { _ in
+            handler()
+        })
+        present(alert, animated: true)
+    }
 
     private func updateDateRow(date: Date?) {
         let display = TaskDueDatePresenter.formDisplay(for: date)

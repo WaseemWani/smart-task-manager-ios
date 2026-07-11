@@ -130,4 +130,11 @@ private final class MockCreateTaskService: TaskServicing {
         updatedInput = input
         completion(updateTaskResult)
     }
+
+    func deleteTask(
+        task: Task,
+        completion: @escaping (Result<Void, TaskError>) -> Void
+    ) {
+        completion(.failure(.deleteFailed))
+    }
 }
