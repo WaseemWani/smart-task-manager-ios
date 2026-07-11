@@ -64,4 +64,11 @@ enum AppConstants {
         static let aiAssistantTitle = "AI Assistant"
         static let profileTitle = "Profile"
     }
+
+    enum TaskList {
+        static let screenTitle = "My Tasks"
+        static let highPriority = "High"
+        static let mediumPriority = "Medium"
+        static let lowPriority = "Low"
+    }
 }
