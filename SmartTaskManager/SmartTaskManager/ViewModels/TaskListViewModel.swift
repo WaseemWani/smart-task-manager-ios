@@ -11,6 +11,7 @@ enum TaskListViewState: Equatable {
     case loading
     case loaded([Task])
     case empty
+    case filteredEmpty(TaskPriorityFilter)
     case error(String)
 }
 
@@ -29,6 +30,10 @@ final class TaskListViewModel {
             onStateChange?(state)
         }
     }
+
+    private(set) var selectedPriorityFilter: TaskPriorityFilter = .all
+
+    private var allTasks: [Task] = []
 
     // MARK: - Dependencies
 
@@ -54,13 +59,19 @@ final class TaskListViewModel {
         }
     }
 
+    func setPriorityFilter(_ filter: TaskPriorityFilter) {
+        selectedPriorityFilter = filter
+        publishFilteredTasks()
+    }
+
     func deleteTask(_ task: Task, completion: @escaping (Result<Void, TaskError>) -> Void) {
         taskService.deleteTask(task: task) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
 
                 if case .success = result {
-                    self.removeTaskFromState(task)
+                    self.allTasks.removeAll { $0.id == task.id }
+                    self.publishFilteredTasks()
                 }
 
                 completion(result)
@@ -70,18 +81,25 @@ final class TaskListViewModel {
 
     // MARK: - Private
 
-    private func removeTaskFromState(_ task: Task) {
-        guard case .loaded(var tasks) = state else { return }
+    private func publishFilteredTasks() {
+        let filteredTasks = TaskFilter.filter(allTasks, by: selectedPriorityFilter)
 
-        tasks.removeAll { $0.id == task.id }
-        state = tasks.isEmpty ? .empty : .loaded(tasks)
+        if allTasks.isEmpty {
+            state = .empty
+        } else if filteredTasks.isEmpty {
+            state = .filteredEmpty(selectedPriorityFilter)
+        } else {
+            state = .loaded(filteredTasks)
+        }
     }
 
     private func handleFetchResult(_ result: Result<[Task], TaskError>) {
         switch result {
         case .success(let tasks):
-            state = tasks.isEmpty ? .empty : .loaded(tasks)
+            allTasks = tasks
+            publishFilteredTasks()
         case .failure(let error):
+            allTasks = []
             state = .error(error.message)
         }
     }

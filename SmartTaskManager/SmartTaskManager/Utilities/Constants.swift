@@ -86,6 +86,9 @@ enum AppConstants {
         static let deleteAction = "Delete"
         static let deleteConfirmTitle = "Delete Task?"
         static let deleteConfirmMessage = "This action cannot be undone."
+        static let filterAll = "All"
+        static let filteredEmptyTitle = "No matching tasks"
+        static let filteredEmptyMessage = "Try another priority filter to see more tasks."
         static let tomorrow = "Tomorrow"
         static let emptyTitle = "No tasks yet"
         static let emptyMessage = "Your tasks will appear here once you create them."
@@ -110,6 +113,11 @@ enum AppConstants {
             static let cardShadowYOffset: CGFloat = 4
             static let optionRowHeight: CGFloat = 44
             static let saveButtonHeight: CGFloat = 50
+            static let filterChipHorizontalPadding: CGFloat = 16
+            static let filterChipVerticalPadding: CGFloat = 8
+            static let filterChipHeight: CGFloat = 34
+            static let filterChipBottomPadding: CGFloat = 8
+            static let filterSectionHeight: CGFloat = 42
         }
     }
 

@@ -83,4 +83,16 @@ final class EmptyStateView: UIView {
             contentStack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -AppConstants.TaskList.Layout.marginMain)
         ])
     }
+
+    func configure(title: String, message: String) {
+        titleLabel.text = title
+        messageLabel.text = message
+    }
+
+    func resetToDefault() {
+        configure(
+            title: AppConstants.TaskList.emptyTitle,
+            message: AppConstants.TaskList.emptyMessage
+        )
+    }
 }

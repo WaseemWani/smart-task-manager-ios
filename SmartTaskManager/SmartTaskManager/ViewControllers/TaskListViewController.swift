@@ -40,6 +40,15 @@ final class TaskListViewController: UIViewController {
 
     private let emptyStateView = EmptyStateView()
 
+    private let filterView = TaskPriorityFilterView()
+
+    private let filterContainerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+
     private let topBarView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -141,6 +150,8 @@ final class TaskListViewController: UIViewController {
         topBarView.addSubview(addButton)
         view.addSubview(screenHeaderView)
         screenHeaderView.addSubview(screenTitleLabel)
+        view.addSubview(filterContainerView)
+        filterContainerView.addSubview(filterView)
         view.addSubview(tableView)
         view.addSubview(activityIndicator)
         view.addSubview(emptyStateView)
@@ -153,6 +164,10 @@ final class TaskListViewController: UIViewController {
 
         retryButton.addTarget(self, action: #selector(retryTapped), for: .touchUpInside)
         addButton.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
+
+        filterView.onFilterSelected = { [weak self] filter in
+            self?.viewModel.setPriorityFilter(filter)
+        }
     }
 
     private func setupConstraints() {
@@ -178,7 +193,17 @@ final class TaskListViewController: UIViewController {
             screenTitleLabel.trailingAnchor.constraint(equalTo: screenHeaderView.trailingAnchor),
             screenTitleLabel.bottomAnchor.constraint(equalTo: screenHeaderView.bottomAnchor, constant: -layout.headerBottomSpacing),
 
-            tableView.topAnchor.constraint(equalTo: screenHeaderView.bottomAnchor),
+            filterContainerView.topAnchor.constraint(equalTo: screenHeaderView.bottomAnchor, constant: layout.stackGap),
+            filterContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: margin),
+            filterContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -margin),
+            filterContainerView.heightAnchor.constraint(equalToConstant: layout.filterSectionHeight),
+
+            filterView.topAnchor.constraint(equalTo: filterContainerView.topAnchor),
+            filterView.leadingAnchor.constraint(equalTo: filterContainerView.leadingAnchor),
+            filterView.trailingAnchor.constraint(equalTo: filterContainerView.trailingAnchor),
+            filterView.bottomAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
+
+            tableView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: margin),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -margin),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -186,7 +211,7 @@ final class TaskListViewController: UIViewController {
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
 
-            emptyStateView.topAnchor.constraint(equalTo: screenHeaderView.bottomAnchor),
+            emptyStateView.topAnchor.constraint(equalTo: filterContainerView.bottomAnchor),
             emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -224,15 +249,31 @@ final class TaskListViewController: UIViewController {
         case .empty:
             tasks = []
             showEmpty()
+        case .filteredEmpty:
+            tasks = []
+            showFilteredEmpty()
         case .error(let message):
             tasks = []
             showError(message)
         }
+
+        if case .loading = state {
+            return
+        }
+
+        if case .error = state {
+            filterContainerView.isHidden = true
+            return
+        }
+
+        filterContainerView.isHidden = false
+        filterView.setSelectedFilter(viewModel.selectedPriorityFilter)
     }
 
     private func showLoading() {
         tableView.isHidden = true
         emptyStateView.isHidden = true
+        filterContainerView.isHidden = true
         errorLabel.isHidden = true
         retryButton.isHidden = true
         activityIndicator.startAnimating()
@@ -244,6 +285,7 @@ final class TaskListViewController: UIViewController {
         emptyStateView.isHidden = true
         errorLabel.isHidden = true
         retryButton.isHidden = true
+        emptyStateView.resetToDefault()
         tableView.reloadData()
     }
 
@@ -253,6 +295,19 @@ final class TaskListViewController: UIViewController {
         emptyStateView.isHidden = false
         errorLabel.isHidden = true
         retryButton.isHidden = true
+        emptyStateView.resetToDefault()
+    }
+
+    private func showFilteredEmpty() {
+        activityIndicator.stopAnimating()
+        tableView.isHidden = true
+        emptyStateView.isHidden = false
+        errorLabel.isHidden = true
+        retryButton.isHidden = true
+        emptyStateView.configure(
+            title: AppConstants.TaskList.filteredEmptyTitle,
+            message: AppConstants.TaskList.filteredEmptyMessage
+        )
     }
 
     private func showError(_ message: String) {
