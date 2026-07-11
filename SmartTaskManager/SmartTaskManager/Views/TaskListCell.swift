@@ -9,6 +9,8 @@ final class TaskListCell: UITableViewCell {
 
     static let reuseIdentifier = "TaskListCell"
 
+    var onCheckboxTapped: (() -> Void)?
+
     // MARK: - UI
 
     private let cardView: UIView = {
@@ -68,11 +70,19 @@ final class TaskListCell: UITableViewCell {
         setupViews()
         setupConstraints()
         applyCardShadow()
+        checkboxView.onTap = { [weak self] in
+            self?.onCheckboxTapped?()
+        }
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         nil
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onCheckboxTapped = nil
     }
 
     // MARK: - Configuration

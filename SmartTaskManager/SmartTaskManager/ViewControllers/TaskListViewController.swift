@@ -235,6 +235,10 @@ final class TaskListViewController: UIViewController {
         viewModel.onStateChange = { [weak self] state in
             self?.applyState(state)
         }
+        viewModel.onToggleError = { [weak self] message in
+            guard let self else { return }
+            ToastBannerView.show(in: self.view, message: message)
+        }
     }
 
     // MARK: - State
@@ -333,6 +337,10 @@ final class TaskListViewController: UIViewController {
         viewModel.loadTasks()
     }
 
+    private func toggleCompletion(for task: Task) {
+        viewModel.toggleCompletion(for: task.id)
+    }
+
     private func presentTaskForm(
         _ viewController: CreateTaskViewController,
         onSuccess: @escaping () -> Void
@@ -426,7 +434,11 @@ extension TaskListViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
-        cell.configure(with: tasks[indexPath.row])
+        let task = tasks[indexPath.row]
+        cell.configure(with: task)
+        cell.onCheckboxTapped = { [weak self] in
+            self?.toggleCompletion(for: task)
+        }
         return cell
     }
 }
