@@ -28,7 +28,10 @@ final class TaskListCell: UITableViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = AppFont.headline()
         label.textColor = .appOnSurface
-        label.numberOfLines = 2
+        label.numberOfLines = AppConstants.TaskList.Layout.titleMaxLines
+        label.lineBreakMode = .byTruncatingTail
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return label
     }()
 
@@ -112,7 +115,11 @@ final class TaskListCell: UITableViewCell {
         let gutter = AppConstants.TaskList.Layout.gutterCard
         let rowGap = AppConstants.TaskList.Layout.cardRowGap
         let stackGap = AppConstants.TaskList.Layout.stackGap
+        let titleBadgeGap = AppConstants.TaskList.Layout.titleBadgeGap
         let iconSize = AppConstants.TaskList.Layout.dueDateIconSize
+
+        priorityBadgeView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        priorityBadgeView.setContentHuggingPriority(.required, for: .horizontal)
 
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -125,9 +132,16 @@ final class TaskListCell: UITableViewCell {
 
             titleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: gutter),
             titleLabel.leadingAnchor.constraint(equalTo: checkboxView.trailingAnchor, constant: rowGap),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: priorityBadgeView.leadingAnchor, constant: -stackGap),
+            titleLabel.trailingAnchor.constraint(
+                lessThanOrEqualTo: priorityBadgeView.leadingAnchor,
+                constant: -titleBadgeGap
+            ),
 
             priorityBadgeView.topAnchor.constraint(equalTo: cardView.topAnchor, constant: gutter),
+            priorityBadgeView.leadingAnchor.constraint(
+                greaterThanOrEqualTo: titleLabel.trailingAnchor,
+                constant: titleBadgeGap
+            ),
             priorityBadgeView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -gutter),
 
             dueDateRow.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: stackGap),
