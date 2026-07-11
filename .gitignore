@@ -12,3 +12,6 @@ build/
 
 # Swift Package Manager
 .build/
+
+# Local secrets (copy from Secrets.example.xcconfig)
+SmartTaskManager/Secrets.xcconfig

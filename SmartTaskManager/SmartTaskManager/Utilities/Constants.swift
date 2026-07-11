@@ -151,4 +151,20 @@ enum AppConstants {
             static let pickerDoneButtonVerticalPadding: CGFloat = 10
         }
     }
+
+    enum AI {
+        static let missingAPIKey = "AI is not configured. Add your Gemini API key to continue."
+        static let invalidURL = "Unable to reach the AI service."
+        static let noData = "The AI service returned no data."
+        static let invalidResponse = "The AI service returned an invalid response."
+        static let requestFailed = "The AI request failed. Please try again."
+        static let decodingFailed = "Unable to read the AI response."
+        static let timedOut = "The AI request timed out. Please try again."
+        static let networkUnavailable = "Network unavailable. Check your connection and try again."
+        static let cancelled = "The AI request was cancelled."
+        static let emptyResponse = "The AI service returned an empty response."
+        static let unrecognizedPriority = "Unable to determine a valid priority from the AI response."
+        static let insufficientSubtasks = "The AI response did not include enough subtasks."
+        static let unknown = "Something went wrong with the AI request. Please try again."
+    }
 }

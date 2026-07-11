@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7323F25D3002C7870069A99D /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		73FFEF732FF4ED02001ACEFA /* SmartTaskManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartTaskManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		73FFEF892FF4ED04001ACEFA /* SmartTaskManagerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartTaskManagerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		73FFEF932FF4ED04001ACEFA /* SmartTaskManagerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartTaskManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +89,7 @@
 		73FFEF6A2FF4ED02001ACEFA = {
 			isa = PBXGroup;
 			children = (
+				7323F25D3002C7870069A99D /* Secrets.xcconfig */,
 				73FFEF752FF4ED02001ACEFA /* SmartTaskManager */,
 				73FFEF8C2FF4ED04001ACEFA /* SmartTaskManagerTests */,
 				73FFEF962FF4ED04001ACEFA /* SmartTaskManagerUITests */,
@@ -284,6 +286,7 @@
 /* Begin XCBuildConfiguration section */
 		73FFEF9D2FF4ED04001ACEFA /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7323F25D3002C7870069A99D /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -315,6 +318,7 @@
 		};
 		73FFEF9E2FF4ED04001ACEFA /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7323F25D3002C7870069A99D /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
