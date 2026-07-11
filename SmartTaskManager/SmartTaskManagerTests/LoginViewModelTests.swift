@@ -137,6 +137,27 @@ private final class MockInputValidator: InputValidating {
     func validateLogin(email: String, password: String) -> ValidationResult {
         loginResult
     }
+
+    func validateTaskTitle(_ title: String) -> ValidationError? {
+        nil
+    }
+
+    func validateTaskPriority(_ priority: TaskPriority?) -> ValidationError? {
+        nil
+    }
+
+    func validateTaskDueDate(_ dueDate: Date?, referenceDate: Date) -> ValidationError? {
+        nil
+    }
+
+    func validateCreateTask(
+        title: String,
+        priority: TaskPriority?,
+        dueDate: Date?,
+        referenceDate: Date
+    ) -> ValidationResult {
+        .valid
+    }
 }
 
 // MARK: - MockAuthService

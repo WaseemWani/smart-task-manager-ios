@@ -43,6 +43,9 @@ enum AppConstants {
         static let invalidEmail = "Please enter a valid email address"
         static let passwordRequired = "Password is required"
         static let passwordTooShort = "Password must be at least 8 characters"
+        static let taskTitleRequired = "Title is required"
+        static let taskPriorityRequired = "Priority is required"
+        static let taskInvalidDueDate = "Due date cannot be in the past"
     }
 
     enum Auth {
