@@ -70,5 +70,6 @@ enum AppConstants {
         static let highPriority = "High"
         static let mediumPriority = "Medium"
         static let lowPriority = "Low"
+        static let loadFailed = "Unable to load tasks. Please try again."
     }
 }

@@ -36,3 +36,16 @@ enum TaskPriority: String, Codable, CaseIterable, Equatable {
         }
     }
 }
+
+// MARK: - TaskError
+
+enum TaskError: Error, Equatable {
+    case loadFailed
+
+    var message: String {
+        switch self {
+        case .loadFailed:
+            return AppConstants.TaskList.loadFailed
+        }
+    }
+}
