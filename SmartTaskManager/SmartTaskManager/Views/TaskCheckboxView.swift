@@ -7,6 +7,8 @@ import UIKit
 
 final class TaskCheckboxView: UIView {
 
+    var onTap: (() -> Void)?
+
     private let checkmarkImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -20,8 +22,12 @@ final class TaskCheckboxView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         translatesAutoresizingMaskIntoConstraints = false
+        isUserInteractionEnabled = true
         setupViews()
         applyTheme(isCompleted: false)
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        addGestureRecognizer(tapGesture)
     }
 
     @available(*, unavailable)
@@ -36,6 +42,10 @@ final class TaskCheckboxView: UIView {
 
     func configure(isCompleted: Bool) {
         applyTheme(isCompleted: isCompleted)
+    }
+
+    @objc private func handleTap() {
+        onTap?()
     }
 
     private func setupViews() {
