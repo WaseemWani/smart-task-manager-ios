@@ -8,30 +8,58 @@ import UIKit
 enum AppFont {
 
     static func title() -> UIFont {
-        .systemFont(ofSize: 28, weight: .bold)
+        font(size: 28, weight: .bold)
+    }
+
+    static func largeTitleMobile() -> UIFont {
+        font(size: 28, weight: .bold)
+    }
+
+    static func headline() -> UIFont {
+        font(size: 17, weight: .semibold)
     }
 
     static func body() -> UIFont {
-        .systemFont(ofSize: 15, weight: .regular)
+        font(size: 15, weight: .regular)
+    }
+
+    static func subheadline() -> UIFont {
+        font(size: 15, weight: .regular)
     }
 
     static func input() -> UIFont {
-        .systemFont(ofSize: 17, weight: .regular)
+        font(size: 17, weight: .regular)
     }
 
     static func button() -> UIFont {
-        .systemFont(ofSize: 17, weight: .semibold)
+        font(size: 17, weight: .semibold)
     }
 
     static func link() -> UIFont {
-        .systemFont(ofSize: 13, weight: .regular)
+        font(size: 13, weight: .regular)
     }
 
     static func caption() -> UIFont {
-        .systemFont(ofSize: 12, weight: .regular)
+        font(size: 12, weight: .regular)
+    }
+
+    static func footnote() -> UIFont {
+        font(size: 13, weight: .regular)
+    }
+
+    static func priorityBadge() -> UIFont {
+        font(size: 10, weight: .semibold)
     }
 
     static func divider() -> UIFont {
-        .systemFont(ofSize: 13, weight: .regular)
+        font(size: 13, weight: .regular)
+    }
+
+    private static func font(size: CGFloat, weight: UIFont.Weight) -> UIFont {
+        let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
+            .addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: weight]
+            ])
+        return UIFont(descriptor: descriptor, size: size)
     }
 }

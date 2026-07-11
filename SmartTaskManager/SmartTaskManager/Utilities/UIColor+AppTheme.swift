@@ -45,6 +45,33 @@ extension UIColor {
     /// Validation error text and borders (#D32F2F).
     static let appError = UIColor(red: 211 / 255, green: 47 / 255, blue: 47 / 255, alpha: 1)
 
+    /// Secondary surface text (#414755).
+    static let appOnSurfaceVariant = UIColor(red: 65 / 255, green: 71 / 255, blue: 85 / 255, alpha: 1)
+
+    /// High priority badge background — error at 10% (#BA1A1A).
+    static let appHighPriorityBadgeBackground = UIColor(red: 186 / 255, green: 26 / 255, blue: 26 / 255, alpha: 0.1)
+
+    /// High priority badge text (#BA1A1A).
+    static let appHighPriorityBadgeText = UIColor(red: 186 / 255, green: 26 / 255, blue: 26 / 255, alpha: 1)
+
+    /// Medium priority badge background — tertiary container at 20% (#AC6300).
+    static let appMediumPriorityBadgeBackground = UIColor(red: 172 / 255, green: 99 / 255, blue: 0 / 255, alpha: 0.2)
+
+    /// Medium priority badge text (#894D00).
+    static let appMediumPriorityBadgeText = UIColor(red: 137 / 255, green: 77 / 255, blue: 0 / 255, alpha: 1)
+
+    /// Low priority badge background — primary at 10% (#0058BC).
+    static let appLowPriorityBadgeBackground = UIColor(red: 0 / 255, green: 88 / 255, blue: 188 / 255, alpha: 0.1)
+
+    /// Low priority badge text (#0058BC).
+    static let appLowPriorityBadgeText = UIColor(red: 0 / 255, green: 88 / 255, blue: 188 / 255, alpha: 1)
+
+    /// Task card border (black at 5% opacity).
+    static let appTaskCardBorder = UIColor.black.withAlphaComponent(0.05)
+
+    /// Task card shadow color.
+    static let appTaskCardShadow = UIColor.black.withAlphaComponent(0.08)
+
     @available(*, deprecated, renamed: "appBackground")
     static let appSplashBackground = appBackground
 }

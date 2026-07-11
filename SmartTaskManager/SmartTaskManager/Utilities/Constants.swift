@@ -71,5 +71,24 @@ enum AppConstants {
         static let mediumPriority = "Medium"
         static let lowPriority = "Low"
         static let loadFailed = "Unable to load tasks. Please try again."
+        static let tomorrow = "Tomorrow"
+        static let emptyTitle = "No tasks yet"
+        static let emptyMessage = "Your tasks will appear here once you create them."
+
+        enum Layout {
+            static let marginMain: CGFloat = 16
+            static let gutterCard: CGFloat = 12
+            static let stackGap: CGFloat = 8
+            static let cardCornerRadius: CGFloat = 12
+            static let cardRowGap: CGFloat = 12
+            static let checkboxSize: CGFloat = 24
+            static let checkboxBorderWidth: CGFloat = 2
+            static let priorityBadgeCornerRadius: CGFloat = 6
+            static let priorityBadgeHorizontalPadding: CGFloat = 8
+            static let priorityBadgeVerticalPadding: CGFloat = 2
+            static let dueDateIconSize: CGFloat = 16
+            static let cardShadowRadius: CGFloat = 12
+            static let cardShadowYOffset: CGFloat = 4
+        }
     }
 }

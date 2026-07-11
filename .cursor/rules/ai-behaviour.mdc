@@ -9,6 +9,8 @@ Before generating code:
 - Do not create new files unless necessary
 - Reuse existing components
 - Do not guess missing requirements
+- Do not assume things
+- Ask questions if you need clarity or there is ambiguity
 - Ask if requirements are ambiguous
 - Explain architecture decisions before coding
 - Prefer minimal code changes
