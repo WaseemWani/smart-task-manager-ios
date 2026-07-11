@@ -9,6 +9,7 @@ import Foundation
 
 struct Task: Codable, Equatable, Identifiable {
     let id: String
+    let serverID: String?
     let title: String
     let description: String?
     let priority: TaskPriority
@@ -16,6 +17,8 @@ struct Task: Codable, Equatable, Identifiable {
     let isCompleted: Bool
     let createdAt: Date
     let updatedAt: Date
+
+    var isEditable: Bool { serverID != nil }
 }
 
 // MARK: - TaskPriority
@@ -68,6 +71,8 @@ struct CreateTaskInput: Equatable {
 enum TaskError: Error, Equatable {
     case loadFailed
     case createFailed
+    case updateFailed
+    case taskNotEditable
     case notLoggedIn
 
     var message: String {
@@ -76,6 +81,10 @@ enum TaskError: Error, Equatable {
             return AppConstants.TaskList.loadFailed
         case .createFailed:
             return AppConstants.TaskList.createFailed
+        case .updateFailed:
+            return AppConstants.TaskList.updateFailed
+        case .taskNotEditable:
+            return AppConstants.TaskList.taskNotEditable
         case .notLoggedIn:
             return AppConstants.TaskList.notLoggedIn
         }

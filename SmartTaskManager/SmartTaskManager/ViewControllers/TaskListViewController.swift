@@ -11,6 +11,7 @@ final class TaskListViewController: UIViewController {
 
     private let viewModel: TaskListViewModel
     private let makeCreateTaskViewController: () -> CreateTaskViewController
+    private let makeEditTaskViewController: (Task) -> CreateTaskViewController
 
     // MARK: - State
 
@@ -94,10 +95,14 @@ final class TaskListViewController: UIViewController {
 
     init(
         viewModel: TaskListViewModel = TaskListViewModel(),
-        makeCreateTaskViewController: @escaping () -> CreateTaskViewController = { CreateTaskViewController() }
+        makeCreateTaskViewController: @escaping () -> CreateTaskViewController = { CreateTaskViewController() },
+        makeEditTaskViewController: @escaping (Task) -> CreateTaskViewController = {
+            CreateTaskViewController(viewModel: CreateTaskViewModel(taskToEdit: $0))
+        }
     ) {
         self.viewModel = viewModel
         self.makeCreateTaskViewController = makeCreateTaskViewController
+        self.makeEditTaskViewController = makeEditTaskViewController
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -143,6 +148,7 @@ final class TaskListViewController: UIViewController {
         view.addSubview(retryButton)
 
         tableView.dataSource = self
+        tableView.delegate = self
         tableView.register(TaskListCell.self, forCellReuseIdentifier: TaskListCell.reuseIdentifier)
 
         retryButton.addTarget(self, action: #selector(retryTapped), for: .touchUpInside)
@@ -261,25 +267,43 @@ final class TaskListViewController: UIViewController {
     // MARK: - Actions
 
     @objc private func addTaskTapped() {
-        let createTaskViewController = makeCreateTaskViewController()
-        createTaskViewController.onTaskCreated = { [weak self] _ in
+        presentTaskForm(makeCreateTaskViewController()) { [weak self] in
             guard let self else { return }
-
-            self.dismiss(animated: true) {
-                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.createSuccess)
-                self.viewModel.loadTasks()
-            }
+            ToastBannerView.show(in: self.view, message: AppConstants.TaskList.createSuccess)
+            self.viewModel.loadTasks()
         }
-
-        let navigationController = UINavigationController(rootViewController: createTaskViewController)
-        navigationController.modalPresentationStyle = .fullScreen
-        navigationController.navigationBar.prefersLargeTitles = false
-        AppNavigationBarAppearance.apply(to: navigationController.navigationBar)
-        present(navigationController, animated: true)
     }
 
     @objc private func retryTapped() {
         viewModel.loadTasks()
+    }
+
+    private func presentTaskForm(
+        _ viewController: CreateTaskViewController,
+        onSuccess: @escaping () -> Void
+    ) {
+        let navigationController = UINavigationController(rootViewController: viewController)
+        navigationController.modalPresentationStyle = .fullScreen
+        navigationController.navigationBar.prefersLargeTitles = false
+        AppNavigationBarAppearance.apply(to: navigationController.navigationBar)
+
+        viewController.onTaskCreated = { [weak navigationController] _ in
+            navigationController?.dismiss(animated: true, completion: onSuccess)
+        }
+        viewController.onTaskUpdated = { [weak navigationController] _ in
+            navigationController?.dismiss(animated: true, completion: onSuccess)
+        }
+
+        present(navigationController, animated: true)
+    }
+
+    private func presentEditTask(_ task: Task) {
+        let editTaskViewController = makeEditTaskViewController(task)
+        presentTaskForm(editTaskViewController) { [weak self] in
+            guard let self else { return }
+            ToastBannerView.show(in: self.view, message: AppConstants.TaskList.updateSuccess)
+            self.viewModel.loadTasks()
+        }
     }
 }
 
@@ -301,5 +325,21 @@ extension TaskListViewController: UITableViewDataSource {
 
         cell.configure(with: tasks[indexPath.row])
         return cell
+    }
+}
+
+// MARK: - UITableViewDelegate
+
+extension TaskListViewController: UITableViewDelegate {
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let task = tasks[indexPath.row]
+
+        guard task.isEditable else {
+            ToastBannerView.show(in: view, message: AppConstants.TaskList.taskNotEditable)
+            return
+        }
+
+        presentEditTask(task)
     }
 }

@@ -13,6 +13,11 @@ protocol TaskServicing {
         input: CreateTaskInput,
         completion: @escaping (Result<Task, TaskError>) -> Void
     )
+    func updateTask(
+        task: Task,
+        input: CreateTaskInput,
+        completion: @escaping (Result<Task, TaskError>) -> Void
+    )
 }
 
 // MARK: - TaskService
@@ -77,6 +82,45 @@ final class TaskService: TaskServicing {
                 completion(.success(task))
             case .failure(let error):
                 completion(.failure(Self.mapNetworkError(error, fallback: .createFailed)))
+            }
+        }
+    }
+
+    func updateTask(
+        task: Task,
+        input: CreateTaskInput,
+        completion: @escaping (Result<Task, TaskError>) -> Void
+    ) {
+        guard let serverID = task.serverID else {
+            completion(.failure(.taskNotEditable))
+            return
+        }
+
+        guard let userId = sessionManager.currentSession?.user.id else {
+            completion(.failure(.notLoggedIn))
+            return
+        }
+
+        let request = UpdateTaskRequest(userId: userId, task: task, input: input)
+
+        guard let body = try? encoder.encode(request) else {
+            completion(.failure(.updateFailed))
+            return
+        }
+
+        networkManager.request(
+            endpoint: .updateTask(id: serverID, body: body),
+            responseType: RemoteTask.self
+        ) { result in
+            switch result {
+            case .success(let remoteTask):
+                guard let updatedTask = remoteTask.toTask() else {
+                    completion(.failure(.updateFailed))
+                    return
+                }
+                completion(.success(updatedTask))
+            case .failure(let error):
+                completion(.failure(Self.mapNetworkError(error, fallback: .updateFailed)))
             }
         }
     }

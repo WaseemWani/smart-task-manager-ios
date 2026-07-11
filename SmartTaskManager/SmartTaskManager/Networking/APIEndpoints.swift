@@ -33,7 +33,7 @@ struct APIEndpoint: Equatable {
     static let tasks = APIEndpoint(path: "/tasks", method: .get)
 
     static func task(id: String) -> APIEndpoint {
-        APIEndpoint(path: "/tasks/\(id)", method: .get)
+        APIEndpoint(path: taskPath(for: id), method: .get)
     }
 
     static func createTask(body: Data) -> APIEndpoint {
@@ -41,10 +41,16 @@ struct APIEndpoint: Equatable {
     }
 
     static func updateTask(id: String, body: Data) -> APIEndpoint {
-        APIEndpoint(path: "/tasks/\(id)", method: .put, body: body)
+        APIEndpoint(path: taskPath(for: id), method: .put, body: body)
     }
 
     static func deleteTask(id: String) -> APIEndpoint {
-        APIEndpoint(path: "/tasks/\(id)", method: .delete)
+        APIEndpoint(path: taskPath(for: id), method: .delete)
+    }
+
+    private static func taskPath(for id: String) -> String {
+        let allowed = CharacterSet.urlPathAllowed.subtracting(CharacterSet(charactersIn: "/"))
+        let encodedID = id.addingPercentEncoding(withAllowedCharacters: allowed) ?? id
+        return "/tasks/\(encodedID)"
     }
 }

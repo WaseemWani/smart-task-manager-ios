@@ -10,6 +10,7 @@ final class CreateTaskViewController: UIViewController {
     // MARK: - Callbacks
 
     var onTaskCreated: ((Task) -> Void)?
+    var onTaskUpdated: ((Task) -> Void)?
 
     // MARK: - Dependencies
 
@@ -117,9 +118,13 @@ final class CreateTaskViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(viewModel: CreateTaskViewModel = CreateTaskViewModel()) {
+    init(viewModel: CreateTaskViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+    }
+
+    convenience init() {
+        self.init(viewModel: CreateTaskViewModel())
     }
 
     @available(*, unavailable)
@@ -272,7 +277,7 @@ final class CreateTaskViewController: UIViewController {
 
     private func configureUI() {
         view.backgroundColor = .appBackground
-        title = AppConstants.CreateTask.screenTitle
+        title = viewModel.screenTitle
 
         navigationItem.rightBarButtonItem = AppNavigationBarAppearance.primaryBarButton(
             systemName: "xmark",
@@ -286,11 +291,13 @@ final class CreateTaskViewController: UIViewController {
         saveButton.backgroundColor = .appPrimary
         saveButton.setTitleColor(.appOnPrimary, for: .normal)
         saveButton.setTitleColor(.appOnPrimary.withAlphaComponent(0.6), for: .disabled)
+        saveButton.setTitle(viewModel.saveButtonTitle, for: .normal)
 
         configurePlaceholder(for: titleTextField)
 
-        updateDateRow(date: nil)
-        priorityRowView.setPriority(nil)
+        updateDateRow(date: viewModel.state.dueDate)
+        priorityRowView.setPriority(viewModel.state.priority)
+        descriptionPlaceholderLabel.isHidden = !viewModel.state.description.isEmpty
     }
 
     private func bindViewModel() {
@@ -300,6 +307,10 @@ final class CreateTaskViewController: UIViewController {
 
         viewModel.onCreateSuccess = { [weak self] task in
             self?.onTaskCreated?(task)
+        }
+
+        viewModel.onUpdateSuccess = { [weak self] task in
+            self?.onTaskUpdated?(task)
         }
     }
 
@@ -337,7 +348,7 @@ final class CreateTaskViewController: UIViewController {
             saveButton.setTitle(nil, for: .normal)
         } else {
             saveActivityIndicator.stopAnimating()
-            saveButton.setTitle(AppConstants.CreateTask.saveButton, for: .normal)
+            saveButton.setTitle(viewModel.saveButtonTitle, for: .normal)
         }
     }
 
@@ -397,9 +408,16 @@ final class CreateTaskViewController: UIViewController {
         datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.datePickerMode = .date
         datePicker.preferredDatePickerStyle = .wheels
-        datePicker.minimumDate = Calendar.current.startOfDay(for: Date())
         if let dueDate = viewModel.state.dueDate {
             datePicker.date = dueDate
+            let today = Calendar.current.startOfDay(for: Date())
+            if dueDate < today {
+                datePicker.minimumDate = nil
+            } else {
+                datePicker.minimumDate = today
+            }
+        } else {
+            datePicker.minimumDate = Calendar.current.startOfDay(for: Date())
         }
         activeDatePicker = datePicker
 
