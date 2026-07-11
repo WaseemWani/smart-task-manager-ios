@@ -167,4 +167,6 @@ private final class MockAuthService: AuthServicing {
             completion(self.loginResult)
         }
     }
+
+    func logout() {}
 }

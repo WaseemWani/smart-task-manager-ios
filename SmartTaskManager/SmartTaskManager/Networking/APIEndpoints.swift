@@ -29,6 +29,7 @@ struct APIEndpoint: Equatable {
     }
 
     static let login = APIEndpoint(path: "/login", method: .get)
+    static let users = login
     static let tasks = APIEndpoint(path: "/tasks", method: .get)
 
     static func task(id: String) -> APIEndpoint {

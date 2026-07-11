@@ -53,4 +53,9 @@ enum AppConstants {
         static let serverError = "Something went wrong. Please try again later."
         static let unknownError = "Unable to sign in. Please try again."
     }
+
+    enum SessionKeys {
+        static let sessionToken = "stm.session.token"
+        static let currentUser = "stm.session.currentUser"
+    }
 }

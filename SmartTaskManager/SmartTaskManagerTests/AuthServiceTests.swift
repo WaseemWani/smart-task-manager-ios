@@ -9,23 +9,23 @@ import XCTest
 final class AuthServiceTests: XCTestCase {
 
     private var networkManager: MockNetworkManager!
-    private var storageManager: MockSessionStorage!
+    private var sessionManager: MockSessionManager!
     private var authService: AuthService!
 
     override func setUp() {
         super.setUp()
         networkManager = MockNetworkManager()
-        storageManager = MockSessionStorage()
+        sessionManager = MockSessionManager()
         authService = AuthService(
             networkManager: networkManager,
-            storageManager: storageManager,
+            sessionManager: sessionManager,
             tokenGenerator: { "mock_session_token_test" }
         )
     }
 
     override func tearDown() {
         authService = nil
-        storageManager = nil
+        sessionManager = nil
         networkManager = nil
         super.tearDown()
     }
@@ -42,8 +42,8 @@ final class AuthServiceTests: XCTestCase {
                 XCTAssertTrue(response.status)
                 XCTAssertEqual(response.token, "mock_session_token_test")
                 XCTAssertEqual(response.user.email, "user@email.com")
-                XCTAssertEqual(self.storageManager.savedToken, "mock_session_token_test")
-                XCTAssertEqual(self.storageManager.savedUser?.email, "user@email.com")
+                XCTAssertEqual(self.sessionManager.savedToken, "mock_session_token_test")
+                XCTAssertEqual(self.sessionManager.savedUser?.email, "user@email.com")
             case .failure:
                 XCTFail("Expected successful login")
             }
@@ -51,7 +51,7 @@ final class AuthServiceTests: XCTestCase {
         }
 
         wait(for: [expectation], timeout: 1)
-        XCTAssertEqual(networkManager.requestedEndpoint, .users)
+        XCTAssertEqual(networkManager.requestedEndpoint, .login)
     }
 
     func testLoginFailsWithInvalidCredentials() {
@@ -71,7 +71,19 @@ final class AuthServiceTests: XCTestCase {
         }
 
         wait(for: [expectation], timeout: 1)
-        XCTAssertNil(storageManager.savedToken)
+        XCTAssertNil(sessionManager.savedToken)
+    }
+
+    func testLogoutClearsSession() {
+        sessionManager.saveSession(
+            token: "mock_session_token_test",
+            user: User(id: "1", name: "Demo User", email: "user@email.com")
+        )
+
+        authService.logout()
+
+        XCTAssertNil(sessionManager.savedToken)
+        XCTAssertNil(sessionManager.savedUser)
     }
 
     func testLoginMapsTimeoutError() {
@@ -126,20 +138,31 @@ private final class MockNetworkManager: NetworkManaging {
     }
 }
 
-// MARK: - MockSessionStorage
+// MARK: - MockSessionManager
 
-private final class MockSessionStorage: SessionStoring {
+private final class MockSessionManager: SessionManaging {
 
     var sessionToken: String?
     var currentUser: User?
     var savedToken: String?
     var savedUser: User?
 
+    var isLoggedIn: Bool { restoreSession() != nil }
+
+    var currentSession: UserSession? { restoreSession() }
+
     func saveSession(token: String, user: User) {
         savedToken = token
         savedUser = user
         sessionToken = token
         currentUser = user
+    }
+
+    func restoreSession() -> UserSession? {
+        guard let token = sessionToken, let user = currentUser, !token.isEmpty else {
+            return nil
+        }
+        return UserSession(token: token, user: user)
     }
 
     func clearSession() {

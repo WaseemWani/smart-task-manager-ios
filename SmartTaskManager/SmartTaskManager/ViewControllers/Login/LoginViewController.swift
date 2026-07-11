@@ -10,6 +10,7 @@ final class LoginViewController: UIViewController {
     // MARK: - Dependencies
 
     private let viewModel: LoginViewModel
+    private let makeHomeViewController: () -> UIViewController
 
     // MARK: - UI
 
@@ -141,8 +142,12 @@ final class LoginViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(viewModel: LoginViewModel = LoginViewModel()) {
+    init(
+        viewModel: LoginViewModel = LoginViewModel(),
+        makeHomeViewController: @escaping () -> UIViewController = { TaskListViewController() }
+    ) {
         self.viewModel = viewModel
+        self.makeHomeViewController = makeHomeViewController
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -338,6 +343,11 @@ final class LoginViewController: UIViewController {
     private func bindViewModel() {
         viewModel.onStateChange = { [weak self] state in
             self?.applyState(state)
+        }
+
+        viewModel.onLoginSuccess = { [weak self] in
+            guard let self else { return }
+            self.replaceRoot(with: self.makeHomeViewController(), animated: true)
         }
     }
 

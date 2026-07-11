@@ -13,6 +13,7 @@ protocol AuthServicing {
         password: String,
         completion: @escaping (Result<AuthLoginResponse, AuthError>) -> Void
     )
+    func logout()
 }
 
 // MARK: - AuthService
@@ -20,16 +21,16 @@ protocol AuthServicing {
 final class AuthService: AuthServicing {
 
     private let networkManager: NetworkManaging
-    private let storageManager: SessionStoring
+    private let sessionManager: SessionManaging
     private let tokenGenerator: () -> String
 
     init(
         networkManager: NetworkManaging = NetworkManager(),
-        storageManager: SessionStoring = StorageManager(),
+        sessionManager: SessionManaging = SessionManager(),
         tokenGenerator: @escaping () -> String = AuthService.defaultTokenGenerator
     ) {
         self.networkManager = networkManager
-        self.storageManager = storageManager
+        self.sessionManager = sessionManager
         self.tokenGenerator = tokenGenerator
     }
 
@@ -77,7 +78,7 @@ final class AuthService: AuthServicing {
 
         let token = tokenGenerator()
         let user = matchedUser.toUser(fallbackID: email)
-        storageManager.saveSession(token: token, user: user)
+        sessionManager.saveSession(token: token, user: user)
 
         let response = AuthLoginResponse(
             status: true,
@@ -86,6 +87,10 @@ final class AuthService: AuthServicing {
             user: user
         )
         completion(.success(response))
+    }
+
+    func logout() {
+        sessionManager.clearSession()
     }
 
     private func mapNetworkError(_ error: NetworkError) -> AuthError {

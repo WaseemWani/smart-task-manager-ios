@@ -18,11 +18,6 @@ protocol SessionStoring: AnyObject {
 
 final class StorageManager: SessionStoring {
 
-    private enum Keys {
-        static let sessionToken = "sessionToken"
-        static let currentUser = "currentUser"
-    }
-
     private let userDefaults: UserDefaults
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
@@ -38,11 +33,11 @@ final class StorageManager: SessionStoring {
     }
 
     var sessionToken: String? {
-        userDefaults.string(forKey: Keys.sessionToken)
+        userDefaults.string(forKey: AppConstants.SessionKeys.sessionToken)
     }
 
     var currentUser: User? {
-        guard let data = userDefaults.data(forKey: Keys.currentUser) else {
+        guard let data = userDefaults.data(forKey: AppConstants.SessionKeys.currentUser) else {
             return nil
         }
 
@@ -50,15 +45,15 @@ final class StorageManager: SessionStoring {
     }
 
     func saveSession(token: String, user: User) {
-        userDefaults.set(token, forKey: Keys.sessionToken)
+        userDefaults.set(token, forKey: AppConstants.SessionKeys.sessionToken)
 
         if let data = try? encoder.encode(user) {
-            userDefaults.set(data, forKey: Keys.currentUser)
+            userDefaults.set(data, forKey: AppConstants.SessionKeys.currentUser)
         }
     }
 
     func clearSession() {
-        userDefaults.removeObject(forKey: Keys.sessionToken)
-        userDefaults.removeObject(forKey: Keys.currentUser)
+        userDefaults.removeObject(forKey: AppConstants.SessionKeys.sessionToken)
+        userDefaults.removeObject(forKey: AppConstants.SessionKeys.currentUser)
     }
 }

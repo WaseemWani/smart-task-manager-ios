@@ -26,6 +26,7 @@ final class LoginViewModel {
     // MARK: - Callbacks
 
     var onStateChange: ((LoginViewState) -> Void)?
+    var onLoginSuccess: (() -> Void)?
 
     // MARK: - State
 
@@ -90,8 +91,7 @@ final class LoginViewModel {
 
                 switch result {
                 case .success:
-                    // TODO(STM-101): Navigate to task list after successful authentication.
-                    break
+                    self.onLoginSuccess?()
                 case .failure(let error):
                     self.state.loginError = error.message
                 }
