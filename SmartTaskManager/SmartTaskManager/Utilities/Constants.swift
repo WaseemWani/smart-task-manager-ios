@@ -98,6 +98,8 @@ enum AppConstants {
             static let headerBottomSpacing: CGFloat = 12
             static let gutterCard: CGFloat = 12
             static let stackGap: CGFloat = 8
+            static let titleBadgeGap: CGFloat = 12
+            static let titleMaxLines = 2
             static let cardCornerRadius: CGFloat = 12
             static let cardRowGap: CGFloat = 12
             static let checkboxSize: CGFloat = 24
