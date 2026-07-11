@@ -47,6 +47,10 @@ enum AppFont {
         font(size: 13, weight: .regular)
     }
 
+    static func filterChip() -> UIFont {
+        font(size: 13, weight: .semibold)
+    }
+
     static func priorityBadge() -> UIFont {
         font(size: 10, weight: .semibold)
     }
