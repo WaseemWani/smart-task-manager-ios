@@ -74,6 +74,7 @@ enum AppConstants {
         static let tomorrow = "Tomorrow"
         static let emptyTitle = "No tasks yet"
         static let emptyMessage = "Your tasks will appear here once you create them."
+        static let retryButton = "Try Again"
 
         enum Layout {
             static let marginMain: CGFloat = 16
