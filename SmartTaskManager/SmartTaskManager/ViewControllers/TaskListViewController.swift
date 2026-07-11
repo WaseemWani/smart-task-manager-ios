@@ -299,11 +299,59 @@ final class TaskListViewController: UIViewController {
 
     private func presentEditTask(_ task: Task) {
         let editTaskViewController = makeEditTaskViewController(task)
-        presentTaskForm(editTaskViewController) { [weak self] in
-            guard let self else { return }
-            ToastBannerView.show(in: self.view, message: AppConstants.TaskList.updateSuccess)
-            self.viewModel.loadTasks()
+        let navigationController = UINavigationController(rootViewController: editTaskViewController)
+        navigationController.modalPresentationStyle = .fullScreen
+        navigationController.navigationBar.prefersLargeTitles = false
+        AppNavigationBarAppearance.apply(to: navigationController.navigationBar)
+
+        editTaskViewController.onTaskUpdated = { [weak navigationController, weak self] _ in
+            navigationController?.dismiss(animated: true) {
+                guard let self else { return }
+                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.updateSuccess)
+                self.viewModel.loadTasks()
+            }
         }
+        editTaskViewController.onTaskDeleted = { [weak navigationController, weak self] in
+            navigationController?.dismiss(animated: true) {
+                guard let self else { return }
+                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.deleteSuccess)
+                self.viewModel.loadTasks()
+            }
+        }
+
+        present(navigationController, animated: true)
+    }
+
+    private func deleteTask(_ task: Task) {
+        viewModel.deleteTask(task) { [weak self] result in
+            guard let self else { return }
+
+            switch result {
+            case .success:
+                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.deleteSuccess)
+            case .failure(let error):
+                ToastBannerView.show(in: self.view, message: error.message)
+            }
+        }
+    }
+
+    private func presentDeleteConfirmation(
+        for task: Task,
+        onConfirm: @escaping () -> Void,
+        onCancel: (() -> Void)? = nil
+    ) {
+        let alert = UIAlertController(
+            title: AppConstants.TaskList.deleteConfirmTitle,
+            message: AppConstants.TaskList.deleteConfirmMessage,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.cancel, style: .cancel) { _ in
+            onCancel?()
+        })
+        alert.addAction(UIAlertAction(title: AppConstants.TaskList.deleteAction, style: .destructive) { _ in
+            onConfirm()
+        })
+        present(alert, animated: true)
     }
 }
 
@@ -341,5 +389,41 @@ extension TaskListViewController: UITableViewDelegate {
         }
 
         presentEditTask(task)
+    }
+
+    func tableView(
+        _ tableView: UITableView,
+        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
+    ) -> UISwipeActionsConfiguration? {
+        let task = tasks[indexPath.row]
+
+        let deleteAction = UIContextualAction(
+            style: .destructive,
+            title: AppConstants.TaskList.deleteAction
+        ) { [weak self] _, _, completion in
+            guard let self else {
+                completion(false)
+                return
+            }
+
+            guard task.isDeletable else {
+                ToastBannerView.show(in: self.view, message: AppConstants.TaskList.taskNotDeletable)
+                completion(false)
+                return
+            }
+
+            self.presentDeleteConfirmation(
+                for: task,
+                onConfirm: { [weak self] in
+                    self?.deleteTask(task)
+                    completion(true)
+                },
+                onCancel: {
+                    completion(false)
+                }
+            )
+        }
+
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }

@@ -30,6 +30,7 @@ final class CreateTaskViewModel {
     var onStateChange: ((CreateTaskViewState) -> Void)?
     var onCreateSuccess: ((Task) -> Void)?
     var onUpdateSuccess: ((Task) -> Void)?
+    var onDeleteSuccess: (() -> Void)?
 
     // MARK: - State
 
@@ -155,6 +156,31 @@ final class CreateTaskViewModel {
             updateTask(editingTask, input: input)
         } else {
             createTask(input: input)
+        }
+    }
+
+    func deleteTask() {
+        guard let editingTask else { return }
+
+        state.isLoading = true
+        state.isSaveEnabled = false
+        state.submitError = nil
+        state.successMessage = nil
+
+        taskService.deleteTask(task: editingTask) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                self.state.isLoading = false
+                self.updateSaveEnabledState()
+
+                switch result {
+                case .success:
+                    self.onDeleteSuccess?()
+                case .failure(let error):
+                    self.state.submitError = error.message
+                }
+            }
         }
     }
 

@@ -19,6 +19,8 @@ struct Task: Codable, Equatable, Identifiable {
     let updatedAt: Date
 
     var isEditable: Bool { serverID != nil }
+
+    var isDeletable: Bool { serverID != nil }
 }
 
 // MARK: - TaskPriority
@@ -72,7 +74,9 @@ enum TaskError: Error, Equatable {
     case loadFailed
     case createFailed
     case updateFailed
+    case deleteFailed
     case taskNotEditable
+    case taskNotDeletable
     case notLoggedIn
 
     var message: String {
@@ -83,8 +87,12 @@ enum TaskError: Error, Equatable {
             return AppConstants.TaskList.createFailed
         case .updateFailed:
             return AppConstants.TaskList.updateFailed
+        case .deleteFailed:
+            return AppConstants.TaskList.deleteFailed
         case .taskNotEditable:
             return AppConstants.TaskList.taskNotEditable
+        case .taskNotDeletable:
+            return AppConstants.TaskList.taskNotDeletable
         case .notLoggedIn:
             return AppConstants.TaskList.notLoggedIn
         }

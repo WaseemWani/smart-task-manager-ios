@@ -80,6 +80,12 @@ enum AppConstants {
         static let updateSuccess = "Task updated successfully"
         static let updateFailed = "Unable to update task. Please try again."
         static let taskNotEditable = "This task can't be edited because it isn't saved on the server yet."
+        static let taskNotDeletable = "This task can't be deleted because it isn't saved on the server yet."
+        static let deleteSuccess = "Task deleted successfully"
+        static let deleteFailed = "Unable to delete task. Please try again."
+        static let deleteAction = "Delete"
+        static let deleteConfirmTitle = "Delete Task?"
+        static let deleteConfirmMessage = "This action cannot be undone."
         static let tomorrow = "Tomorrow"
         static let emptyTitle = "No tasks yet"
         static let emptyMessage = "Your tasks will appear here once you create them."
@@ -112,6 +118,7 @@ enum AppConstants {
     enum EditTask {
         static let screenTitle = "Edit Task"
         static let saveButton = "Save Changes"
+        static let deleteButton = "Delete Task"
     }
 
     enum CreateTask {
