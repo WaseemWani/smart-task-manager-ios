@@ -148,7 +148,7 @@ final class AIService: AIServicing {
             }
 
             guard (200...299).contains(httpResponse.statusCode) else {
-                completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
+                completion(.failure(Self.mapHTTPError(statusCode: httpResponse.statusCode, data: data)))
                 return
             }
 
@@ -268,6 +268,19 @@ final class AIService: AIServicing {
         subtasks
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+
+    private static func mapHTTPError(statusCode: Int, data: Data?) -> AIError {
+        switch statusCode {
+        case 401, 403:
+            return .unauthorized
+        case 404:
+            return .modelUnavailable
+        case 429:
+            return .quotaExceeded
+        default:
+            return .httpError(statusCode: statusCode)
+        }
     }
 
     private static func mapURLError(_ error: URLError) -> AIError {

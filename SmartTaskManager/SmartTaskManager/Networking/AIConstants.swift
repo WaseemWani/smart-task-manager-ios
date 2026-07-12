@@ -8,7 +8,8 @@ import Foundation
 enum AIConstants {
 
     static let baseURL = "https://generativelanguage.googleapis.com/v1beta"
-    static let model = "gemini-2.0-flash"
+    /// `gemini-flash-latest` tracks Google's current free-tier flash model. Older IDs such as
+    static let model = "gemini-flash-latest"
     static let requestTimeout: TimeInterval = 30
     static let minimumSubtaskCount = 2
     static let infoPlistAPIKey = "GEMINI_API_KEY"

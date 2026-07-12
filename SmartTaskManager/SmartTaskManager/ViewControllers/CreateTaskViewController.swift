@@ -91,6 +91,8 @@ final class CreateTaskViewController: UIViewController {
         iconTintColor: .appStitchTertiary
     )
 
+    private let aiAssistantView = CreateTaskAIAssistantView()
+
     private let optionsSeparatorView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -157,7 +159,7 @@ final class CreateTaskViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
-        [detailsCardView, optionsCardView, saveButton].forEach { contentView.addSubview($0) }
+        [detailsCardView, optionsCardView, aiAssistantView, saveButton].forEach { contentView.addSubview($0) }
 
         detailsCardView.addSubview(titleTextField)
         detailsCardView.addSubview(titleSeparatorView)
@@ -183,6 +185,11 @@ final class CreateTaskViewController: UIViewController {
         dateRowView.addTarget(self, action: #selector(dateRowTapped), for: .touchUpInside)
         priorityRowView.addTarget(self, action: #selector(priorityRowTapped), for: .touchUpInside)
         saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
+
+        aiAssistantView.onSuggestPriorityTapped = { [weak self] in
+            self?.view.endEditing(true)
+            self?.viewModel.suggestPriority()
+        }
 
         styleCard(detailsCardView)
         styleCard(optionsCardView)
@@ -261,7 +268,14 @@ final class CreateTaskViewController: UIViewController {
             priorityErrorLabel.leadingAnchor.constraint(equalTo: optionsCardView.leadingAnchor),
             priorityErrorLabel.trailingAnchor.constraint(equalTo: optionsCardView.trailingAnchor),
 
-            submitErrorLabel.topAnchor.constraint(equalTo: priorityErrorLabel.bottomAnchor, constant: stackGap),
+            aiAssistantView.topAnchor.constraint(
+                equalTo: priorityErrorLabel.bottomAnchor,
+                constant: AppConstants.CreateTask.Layout.aiSectionTopSpacing
+            ),
+            aiAssistantView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
+            aiAssistantView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
+
+            submitErrorLabel.topAnchor.constraint(equalTo: aiAssistantView.bottomAnchor, constant: stackGap),
             submitErrorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
             submitErrorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
 
@@ -328,6 +342,16 @@ final class CreateTaskViewController: UIViewController {
         viewModel.onDeleteSuccess = { [weak self] in
             self?.onTaskDeleted?()
         }
+
+        viewModel.onAISuccess = { [weak self] message in
+            guard let self else { return }
+            ToastBannerView.show(in: self.view, message: message)
+        }
+
+        viewModel.onAIError = { [weak self] message in
+            guard let self else { return }
+            ToastBannerView.show(in: self.view, message: message)
+        }
     }
 
     // MARK: - State
@@ -356,6 +380,9 @@ final class CreateTaskViewController: UIViewController {
 
         submitErrorLabel.text = state.submitError
         submitErrorLabel.isHidden = state.submitError == nil
+
+        aiAssistantView.setLoading(state.isSuggestingPriority)
+        aiAssistantView.setSuggestPriorityEnabled(state.isSuggestPriorityEnabled)
 
         saveButton.isEnabled = state.isSaveEnabled
 

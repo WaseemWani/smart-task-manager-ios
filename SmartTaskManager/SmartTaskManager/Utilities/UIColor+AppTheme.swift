@@ -78,6 +78,12 @@ extension UIColor {
     /// Stitch tertiary token (#894D00) — priority row icons.
     static let appStitchTertiary = appMediumPriorityBadgeText
 
+    /// Primary border at 10% opacity — AI assistant card border.
+    static let appPrimaryBorderMuted = UIColor(red: 0 / 255, green: 88 / 255, blue: 188 / 255, alpha: 0.1)
+
+    /// Secondary brand color (#006E28) — AI gradient accent.
+    static let appSecondary = UIColor(red: 0 / 255, green: 110 / 255, blue: 40 / 255, alpha: 1)
+
     @available(*, deprecated, renamed: "appBackground")
     static let appSplashBackground = appBackground
 }

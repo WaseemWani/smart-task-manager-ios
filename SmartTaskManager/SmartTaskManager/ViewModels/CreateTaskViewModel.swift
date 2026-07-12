@@ -19,6 +19,8 @@ struct CreateTaskViewState: Equatable {
     var successMessage: String?
     var isLoading: Bool = false
     var isSaveEnabled: Bool = false
+    var isSuggestingPriority: Bool = false
+    var isSuggestPriorityEnabled: Bool = false
 }
 
 // MARK: - CreateTaskViewModel
@@ -31,6 +33,8 @@ final class CreateTaskViewModel {
     var onCreateSuccess: ((Task) -> Void)?
     var onUpdateSuccess: ((Task) -> Void)?
     var onDeleteSuccess: (() -> Void)?
+    var onAISuccess: ((String) -> Void)?
+    var onAIError: ((String) -> Void)?
 
     // MARK: - State
 
@@ -58,17 +62,20 @@ final class CreateTaskViewModel {
 
     private let validator: InputValidating
     private let taskService: TaskServicing
+    private let aiService: AIServicing
 
     // MARK: - Initialization
 
     init(
         taskToEdit: Task? = nil,
         validator: InputValidating = InputValidator(),
-        taskService: TaskServicing = TaskService()
+        taskService: TaskServicing = TaskService(),
+        aiService: AIServicing = AIService()
     ) {
         self.editingTask = taskToEdit
         self.validator = validator
         self.taskService = taskService
+        self.aiService = aiService
 
         if let task = taskToEdit {
             state.title = task.title
@@ -78,6 +85,45 @@ final class CreateTaskViewModel {
         }
 
         updateSaveEnabledState()
+    }
+
+    func suggestPriority() {
+        let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            state.titleError = AppConstants.CreateTask.titleRequiredForAI
+            return
+        }
+
+        guard !state.isSuggestingPriority, !state.isLoading else { return }
+
+        state.isSuggestingPriority = true
+        state.titleError = nil
+        state.submitError = nil
+        updateSuggestPriorityEnabledState()
+
+        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        aiService.suggestPriority(
+            title: trimmedTitle,
+            description: trimmedDescription.isEmpty ? nil : trimmedDescription
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                self.state.isSuggestingPriority = false
+                self.updateSuggestPriorityEnabledState()
+
+                switch result {
+                case .success(let priority):
+                    self.state.priority = priority
+                    self.state.priorityError = nil
+                    self.updateSaveEnabledState()
+                    self.onAISuccess?(AppConstants.AI.prioritySuggested)
+                case .failure(let error):
+                    self.onAIError?(error.message)
+                }
+            }
+        }
     }
 
     // MARK: - Input
@@ -233,6 +279,15 @@ final class CreateTaskViewModel {
         } else {
             state.isSaveEnabled = hasRequiredFields
         }
+
+        updateSuggestPriorityEnabledState()
+    }
+
+    private func updateSuggestPriorityEnabledState() {
+        let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        state.isSuggestPriorityEnabled = !trimmedTitle.isEmpty
+            && !state.isLoading
+            && !state.isSuggestingPriority
     }
 
     private func hasChanges(from task: Task) -> Bool {

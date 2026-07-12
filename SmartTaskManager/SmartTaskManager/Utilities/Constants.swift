@@ -143,12 +143,32 @@ enum AppConstants {
         static let cancel = "Cancel"
         static let done = "Done"
         static let todayPrefix = "Today"
+        static let aiAssistantTitle = "AI Assistant"
+        static let suggestPriority = "Suggest Priority"
+        static let breakIntoSubtasks = "Break Into Subtasks"
+        static let generatingAISuggestions = "Generating AI Suggestions..."
+        static let titleRequiredForAI = "Add a title before using AI suggestions."
 
         enum Layout {
             static let pickerHeaderTopPadding: CGFloat = 16
             static let pickerHeaderBottomPadding: CGFloat = 12
             static let pickerDoneButtonHorizontalPadding: CGFloat = 20
             static let pickerDoneButtonVerticalPadding: CGFloat = 10
+            static let aiSectionTopSpacing: CGFloat = 32
+            static let aiCardCornerRadius: CGFloat = 16
+            static let aiCardPadding: CGFloat = 20
+            static let aiCardBorderWidth: CGFloat = 1
+            static let aiHeaderSpacing: CGFloat = 8
+            static let aiHeaderBottomSpacing: CGFloat = 16
+            static let aiButtonCornerRadius: CGFloat = 12
+            static let aiButtonPadding: CGFloat = 12
+            static let aiButtonSpacing: CGFloat = 12
+            static let aiButtonIconSpacing: CGFloat = 4
+            static let aiLoadingTopSpacing: CGFloat = 24
+            static let aiLoadingTopPadding: CGFloat = 16
+            static let aiLoadingSpacing: CGFloat = 12
+            static let aiSparkIconSize: CGFloat = 20
+            static let aiActionIconSize: CGFloat = 24
         }
     }
 
@@ -157,6 +177,9 @@ enum AppConstants {
         static let invalidURL = "Unable to reach the AI service."
         static let noData = "The AI service returned no data."
         static let invalidResponse = "The AI service returned an invalid response."
+        static let unauthorized = "The Gemini API key is invalid or unauthorized."
+        static let quotaExceeded = "Gemini free-tier quota exceeded. Wait a minute and try again."
+        static let modelUnavailable = "The configured Gemini model is unavailable. Update the model setting and try again."
         static let requestFailed = "The AI request failed. Please try again."
         static let decodingFailed = "Unable to read the AI response."
         static let timedOut = "The AI request timed out. Please try again."
@@ -166,5 +189,6 @@ enum AppConstants {
         static let unrecognizedPriority = "Unable to determine a valid priority from the AI response."
         static let insufficientSubtasks = "The AI response did not include enough subtasks."
         static let unknown = "Something went wrong with the AI request. Please try again."
+        static let prioritySuggested = "Priority suggested successfully."
     }
 }

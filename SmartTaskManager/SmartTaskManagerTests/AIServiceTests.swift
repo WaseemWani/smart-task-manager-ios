@@ -139,7 +139,7 @@ final class AIServiceTests: XCTestCase {
 
         let expectation = expectation(description: "HTTP error")
         aiService.generateSubtasks(title: "Release app", description: nil) { result in
-            XCTAssertEqual(result, .failure(.httpError(statusCode: 429)))
+            XCTAssertEqual(result, .failure(.quotaExceeded))
             expectation.fulfill()
         }
 

@@ -10,6 +10,9 @@ enum AIError: Error, Equatable {
     case invalidURL
     case noData
     case invalidResponse
+    case unauthorized
+    case quotaExceeded
+    case modelUnavailable
     case httpError(statusCode: Int)
     case decodingFailed
     case timedOut
@@ -30,6 +33,12 @@ enum AIError: Error, Equatable {
             return AppConstants.AI.noData
         case .invalidResponse:
             return AppConstants.AI.invalidResponse
+        case .unauthorized:
+            return AppConstants.AI.unauthorized
+        case .quotaExceeded:
+            return AppConstants.AI.quotaExceeded
+        case .modelUnavailable:
+            return AppConstants.AI.modelUnavailable
         case .httpError:
             return AppConstants.AI.requestFailed
         case .decodingFailed:

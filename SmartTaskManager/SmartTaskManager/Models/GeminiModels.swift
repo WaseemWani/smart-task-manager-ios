@@ -36,3 +36,15 @@ struct GeminiResponseContent: Decodable, Equatable {
 struct GeminiResponsePart: Decodable, Equatable {
     let text: String?
 }
+
+// MARK: - Error
+
+struct GeminiErrorResponse: Decodable, Equatable {
+    let error: GeminiErrorBody?
+}
+
+struct GeminiErrorBody: Decodable, Equatable {
+    let code: Int?
+    let message: String?
+    let status: String?
+}
