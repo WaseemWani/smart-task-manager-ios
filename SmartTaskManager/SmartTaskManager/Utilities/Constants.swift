@@ -222,10 +222,11 @@ enum AppConstants {
     }
 
     enum AIAssistant {
-        static let screenTitle = "AI Task Assistant"
+        static let screenTitle = "AI Assistant"
         static let analyzingWorkload = "Analyzing your workload..."
         static let emptyTitle = "No tasks to analyze"
         static let emptyMessage = "Add incomplete tasks to get AI workload insights."
+        static let emptySystemImageName = "sparkles"
         static let applySuccess = "Suggestions applied successfully."
         static let recommendedTaskUnavailable = "The recommended task is no longer available."
         static let taskNotEditable = "This task can't be updated because it isn't saved on the server yet."
@@ -243,12 +244,32 @@ enum AppConstants {
             static let marginMain: CGFloat = 16
             static let sectionSpacing: CGFloat = 24
             static let stackGap: CGFloat = 8
-            static let contentTopSpacing: CGFloat = 24
+            static let contentTopSpacing: CGFloat = 8
             static let contentBottomPadding: CGFloat = 32
             static let actionButtonHeight: CGFloat = 56
             static let actionButtonSpacing: CGFloat = 12
             static let actionSectionTopSpacing: CGFloat = 16
             static let loadingSpacing: CGFloat = 12
+            static let summaryCardCornerRadius: CGFloat = 24
+            static let summaryCardPadding: CGFloat = 24
+            static let summaryChipSpacing: CGFloat = 6
+            static let summaryHeadlineSpacing: CGFloat = 4
+            static let summaryBoltContainerSize: CGFloat = 64
+            static let summaryBoltIconSize: CGFloat = 32
+            static let glassCardCornerRadius: CGFloat = 16
+            static let glassCardPadding: CGFloat = 20
+            static let glassCardMinHeight: CGFloat = 140
+            static let iconContainerSize: CGFloat = 36
+            static let iconContainerCornerRadius: CGFloat = 8
+            static let recommendationBadgeSpacing: CGFloat = 16
+            static let recommendationContentSpacing: CGFloat = 8
+            static let breakdownHeaderSpacing: CGFloat = 24
+            static let breakdownRowSpacing: CGFloat = 20
+            static let suggestedSubtaskCheckboxSize: CGFloat = 20
+            static let suggestedSubtaskCheckboxBorderWidth: CGFloat = 2
+            static let cardBorderWidth: CGFloat = 1
+            static let cardShadowRadius: CGFloat = 12
+            static let cardShadowYOffset: CGFloat = 4
         }
     }
 }

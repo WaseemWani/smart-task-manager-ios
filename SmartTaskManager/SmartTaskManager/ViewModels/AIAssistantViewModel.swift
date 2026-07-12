@@ -269,9 +269,10 @@ final class AIAssistantViewModel {
                 switch result {
                 case .success(let updatedTask):
                     self.replaceTask(updatedTask)
-                    self.lastAnalyzedFingerprint = Self.workloadFingerprint(for: self.allTasks)
+                    TaskNotifications.postDidChange()
                     self.state = .loaded(insight)
                     self.onApplySuccess?(AppConstants.AIAssistant.applySuccess)
+                    self.refreshInsightInBackground()
                 case .failure(let error):
                     self.state = .loaded(insight)
                     self.onApplyError?(error.message)
@@ -287,6 +288,43 @@ final class AIAssistantViewModel {
     private func replaceTask(_ task: Task) {
         if let index = allTasks.firstIndex(where: { $0.id == task.id }) {
             allTasks[index] = task
+        }
+    }
+
+    private func refreshInsightInBackground() {
+        let eligibleTasks = allTasks.filter { !$0.isCompleted }
+        guard !eligibleTasks.isEmpty else {
+            cachedInsight = nil
+            lastAnalyzedFingerprint = nil
+            state = .empty
+            return
+        }
+
+        analysisGeneration += 1
+        let generation = analysisGeneration
+        let fingerprint = Self.workloadFingerprint(for: allTasks)
+        lastAnalyzedFingerprint = nil
+
+        aiService.analyzeWorkload(tasks: allTasks) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard generation == self.analysisGeneration else { return }
+
+                switch result {
+                case .success(let insight):
+                    self.cachedInsight = insight
+                    self.lastAnalyzedFingerprint = fingerprint
+                    if case .loaded = self.state {
+                        self.state = .loaded(insight)
+                    }
+                case .failure(let error):
+                    if error == .noEligibleTasks {
+                        self.cachedInsight = nil
+                        self.lastAnalyzedFingerprint = nil
+                        self.state = .empty
+                    }
+                }
+            }
         }
     }
 

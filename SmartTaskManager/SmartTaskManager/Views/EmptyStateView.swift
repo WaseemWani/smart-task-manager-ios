@@ -84,9 +84,10 @@ final class EmptyStateView: UIView {
         ])
     }
 
-    func configure(title: String, message: String) {
+    func configure(title: String, message: String, systemImageName: String = "checklist") {
         titleLabel.text = title
         messageLabel.text = message
+        iconImageView.image = UIImage(systemName: systemImageName)
     }
 
     func resetToDefault() {

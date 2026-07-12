@@ -38,6 +38,10 @@ final class AIAssistantViewController: UIViewController {
         return stackView
     }()
 
+    private let summaryCardView = AIAssistantSummaryCardView()
+    private let recommendationCardView = AIAssistantRecommendationCardView()
+    private let breakdownSectionView = AIAssistantBreakdownSectionView()
+
     private let actionsStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -163,6 +167,10 @@ final class AIAssistantViewController: UIViewController {
         contentStackView.addArrangedSubview(insightsContainerStackView)
         contentStackView.addArrangedSubview(actionsStackView)
 
+        insightsContainerStackView.addArrangedSubview(summaryCardView)
+        insightsContainerStackView.addArrangedSubview(recommendationCardView)
+        insightsContainerStackView.addArrangedSubview(breakdownSectionView)
+
         actionsStackView.addArrangedSubview(applyButton)
         actionsStackView.addArrangedSubview(regenerateButton)
         applyButton.addSubview(applyActivityIndicator)
@@ -258,7 +266,8 @@ final class AIAssistantViewController: UIViewController {
         retryButton.setTitleColor(.appPrimary, for: .normal)
         emptyStateView.configure(
             title: AppConstants.AIAssistant.emptyTitle,
-            message: AppConstants.AIAssistant.emptyMessage
+            message: AppConstants.AIAssistant.emptyMessage,
+            systemImageName: AppConstants.AIAssistant.emptySystemImageName
         )
     }
 
@@ -293,10 +302,10 @@ final class AIAssistantViewController: UIViewController {
         switch state {
         case .loading:
             showLoading()
-        case .loaded:
-            showContent(isApplying: false)
-        case .applying:
-            showContent(isApplying: true)
+        case .loaded(let insight):
+            showContent(isApplying: false, insight: insight)
+        case .applying(let insight):
+            showContent(isApplying: true, insight: insight)
         case .empty:
             showEmpty()
         case .error(let message):
@@ -315,13 +324,15 @@ final class AIAssistantViewController: UIViewController {
         loadingIndicator.startAnimating()
     }
 
-    private func showContent(isApplying: Bool) {
+    private func showContent(isApplying: Bool, insight: WorkloadInsight) {
         loadingContainerView.isHidden = true
         loadingIndicator.stopAnimating()
         scrollView.isHidden = false
         emptyStateView.isHidden = true
         errorLabel.isHidden = true
         retryButton.isHidden = true
+
+        configureInsights(with: insight)
 
         if isApplying {
             applyActivityIndicator.startAnimating()
@@ -330,6 +341,17 @@ final class AIAssistantViewController: UIViewController {
             applyActivityIndicator.stopAnimating()
             applyButton.setTitle(AppConstants.AIAssistant.applySuggestions, for: .normal)
         }
+    }
+
+    private func configureInsights(with insight: WorkloadInsight) {
+        summaryCardView.configure(
+            headline: insight.summaryHeadline,
+            message: insight.summaryMessage
+        )
+
+        let taskTitle = viewModel.recommendedTask?.title ?? AppConstants.AIAssistant.recommendedTaskUnavailable
+        recommendationCardView.configure(insight: insight, taskTitle: taskTitle)
+        breakdownSectionView.configure(subtasks: insight.suggestedSubtasks)
     }
 
     private func showEmpty() {

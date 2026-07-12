@@ -60,6 +60,15 @@ final class TaskListViewModel {
         }
     }
 
+    func refreshTasks() {
+        taskService.fetchTasks { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.handleFetchResult(result)
+            }
+        }
+    }
+
     func setPriorityFilter(_ filter: TaskPriorityFilter) {
         selectedPriorityFilter = filter
         publishFilteredTasks()

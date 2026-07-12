@@ -16,6 +16,7 @@ final class TaskListViewController: UIViewController {
     // MARK: - State
 
     private var tasks: [Task] = []
+    private var tasksDidChangeObserver: NSObjectProtocol?
 
     // MARK: - UI
 
@@ -118,6 +119,12 @@ final class TaskListViewController: UIViewController {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         nil
+    }
+
+    deinit {
+        if let tasksDidChangeObserver {
+            NotificationCenter.default.removeObserver(tasksDidChangeObserver)
+        }
     }
 
     // MARK: - Lifecycle
@@ -238,6 +245,14 @@ final class TaskListViewController: UIViewController {
         viewModel.onToggleError = { [weak self] message in
             guard let self else { return }
             ToastBannerView.show(in: self.view, message: message)
+        }
+
+        tasksDidChangeObserver = NotificationCenter.default.addObserver(
+            forName: TaskNotifications.didChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.viewModel.refreshTasks()
         }
     }
 
