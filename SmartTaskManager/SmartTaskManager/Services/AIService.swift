@@ -18,6 +18,10 @@ protocol AIServicing {
         description: String?,
         completion: @escaping (Result<[String], AIError>) -> Void
     )
+    func analyzeWorkload(
+        tasks: [Task],
+        completion: @escaping (Result<WorkloadInsight, AIError>) -> Void
+    )
 }
 
 // MARK: - AIKeyProviding
@@ -120,6 +124,33 @@ final class AIService: AIServicing {
         }
     }
 
+    func analyzeWorkload(
+        tasks: [Task],
+        completion: @escaping (Result<WorkloadInsight, AIError>) -> Void
+    ) {
+        let eligibleTasks = tasks.filter { !$0.isCompleted }
+
+        guard !eligibleTasks.isEmpty else {
+            completion(.failure(.noEligibleTasks))
+            return
+        }
+
+        let prompt = AIConstants.Prompts.workloadAnalysis(tasks: eligibleTasks)
+
+        generateContent(prompt: prompt) { result in
+            switch result {
+            case .success(let text):
+                guard let insight = Self.parseWorkloadInsight(from: text, tasks: eligibleTasks) else {
+                    completion(.failure(.invalidWorkloadInsight))
+                    return
+                }
+                completion(.success(insight))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+
     // MARK: - Private
 
     private func generateContent(
@@ -182,6 +213,7 @@ final class AIService: AIServicing {
             return nil
         }
 
+        debugPrint("url...", url)
         let requestBody = GeminiGenerateContentRequest(
             contents: [
                 GeminiContent(parts: [GeminiPart(text: prompt)])
@@ -197,6 +229,8 @@ final class AIService: AIServicing {
         request.timeoutInterval = AIConstants.requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
+        debugPrint("url request...", request)
+
         return request
     }
 
@@ -268,6 +302,71 @@ final class AIService: AIServicing {
         subtasks
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+
+    private static func parseWorkloadInsight(from text: String, tasks: [Task]) -> WorkloadInsight? {
+        guard let payload = decodeWorkloadPayload(from: text) else {
+            return nil
+        }
+
+        let summaryHeadline = payload.summaryHeadline.trimmingCharacters(in: .whitespacesAndNewlines)
+        let summaryMessage = payload.summaryMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let recommendedTaskID = payload.recommendedTaskId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let recommendationLabel = payload.recommendationLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let recommendationReason = payload.recommendationReason.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !summaryHeadline.isEmpty,
+              !summaryMessage.isEmpty,
+              !recommendedTaskID.isEmpty,
+              !recommendationLabel.isEmpty,
+              !recommendationReason.isEmpty else {
+            return nil
+        }
+
+        guard tasks.contains(where: { $0.id == recommendedTaskID }) else {
+            return nil
+        }
+
+        guard let recommendedPriority = parsePriority(from: payload.recommendedPriority) else {
+            return nil
+        }
+
+        let subtaskTitles = sanitizeSubtasks(payload.suggestedSubtasks)
+        guard subtaskTitles.count >= AIConstants.minimumSubtaskCount else {
+            return nil
+        }
+
+        return WorkloadInsight(
+            summaryHeadline: summaryHeadline,
+            summaryMessage: summaryMessage,
+            recommendedTaskID: recommendedTaskID,
+            recommendedPriority: recommendedPriority,
+            recommendationLabel: recommendationLabel,
+            recommendationReason: recommendationReason,
+            suggestedSubtasks: subtaskTitles.map { SuggestedSubtaskItem(title: $0) }
+        )
+    }
+
+    private static func decodeWorkloadPayload(from text: String) -> AIWorkloadInsightPayload? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let data = trimmed.data(using: .utf8),
+           let payload = try? JSONDecoder().decode(AIWorkloadInsightPayload.self, from: data) {
+            return payload
+        }
+
+        guard let startIndex = trimmed.firstIndex(of: "{"),
+              let endIndex = trimmed.lastIndex(of: "}"),
+              startIndex < endIndex else {
+            return nil
+        }
+
+        let jsonSlice = String(trimmed[startIndex...endIndex])
+        guard let data = jsonSlice.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(AIWorkloadInsightPayload.self, from: data)
     }
 
     private static func mapHTTPError(statusCode: Int, data: Data?) -> AIError {

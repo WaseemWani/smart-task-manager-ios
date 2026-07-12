@@ -21,6 +21,8 @@ enum AIError: Error, Equatable {
     case emptyResponse
     case unrecognizedPriority
     case insufficientSubtasks
+    case noEligibleTasks
+    case invalidWorkloadInsight
     case unknown
 
     var message: String {
@@ -55,6 +57,10 @@ enum AIError: Error, Equatable {
             return AppConstants.AI.unrecognizedPriority
         case .insufficientSubtasks:
             return AppConstants.AI.insufficientSubtasks
+        case .noEligibleTasks:
+            return AppConstants.AI.noEligibleTasks
+        case .invalidWorkloadInsight:
+            return AppConstants.AI.invalidWorkloadInsight
         case .unknown:
             return AppConstants.AI.unknown
         }

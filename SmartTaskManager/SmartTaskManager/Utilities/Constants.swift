@@ -214,8 +214,28 @@ enum AppConstants {
         static let emptyResponse = "The AI service returned an empty response."
         static let unrecognizedPriority = "Unable to determine a valid priority from the AI response."
         static let insufficientSubtasks = "The AI response did not include enough subtasks."
+        static let noEligibleTasks = "Add incomplete tasks to get AI workload insights."
+        static let invalidWorkloadInsight = "Unable to read a valid workload insight from the AI response."
         static let unknown = "Something went wrong with the AI request. Please try again."
         static let prioritySuggested = "Priority suggested successfully."
         static let subtasksGenerated = "Subtasks generated successfully."
+    }
+
+    enum AIAssistant {
+        static let screenTitle = "AI Task Assistant"
+        static let analyzingWorkload = "Analyzing your workload..."
+        static let emptyTitle = "No tasks to analyze"
+        static let emptyMessage = "Add incomplete tasks to get AI workload insights."
+        static let applySuccess = "Suggestions applied successfully."
+        static let recommendedTaskUnavailable = "The recommended task is no longer available."
+        static let taskNotEditable = "This task can't be updated because it isn't saved on the server yet."
+        static let replaceSubtasksTitle = "Replace Subtasks?"
+        static let replaceSubtasksMessage = "This will replace the existing subtasks on the recommended task."
+        static let replaceAction = "Replace"
+        static let applySuggestions = "Apply Suggestions"
+        static let regenerate = "Regenerate"
+        static let smartSummary = "Smart Summary"
+        static let suggestedBreakdown = "Suggested Breakdown"
+        static let recommendedPriorityPrefix = "Recommended:"
     }
 }
