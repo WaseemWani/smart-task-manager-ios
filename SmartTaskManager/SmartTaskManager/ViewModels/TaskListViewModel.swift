@@ -99,7 +99,8 @@ final class TaskListViewModel {
             title: task.title,
             description: task.description,
             priority: task.priority,
-            dueDate: task.dueDate
+            dueDate: task.dueDate,
+            subtasks: task.subtasks
         )
 
         taskService.updateTask(task: toggledTask, input: input) { [weak self] result in
@@ -163,6 +164,7 @@ final class TaskListViewModel {
             priority: task.priority,
             dueDate: task.dueDate,
             isCompleted: !task.isCompleted,
+            subtasks: task.subtasks,
             createdAt: task.createdAt,
             updatedAt: task.updatedAt
         )

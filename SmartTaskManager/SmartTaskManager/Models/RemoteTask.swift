@@ -14,6 +14,7 @@ struct CreateTaskRequest: Encodable, Equatable {
     let priority: String
     let dueDate: String?
     let isCompleted: Bool
+    let subtasks: [RemoteSubtask]
 
     init(userId: String, input: CreateTaskInput) {
         self.userId = userId
@@ -22,6 +23,7 @@ struct CreateTaskRequest: Encodable, Equatable {
         self.priority = input.priority.apiValue
         self.dueDate = input.dueDate.map { APIDateFormatter.apiDateString(from: $0) }
         self.isCompleted = false
+        self.subtasks = input.subtasks.map(RemoteSubtask.init)
     }
 }
 
@@ -34,6 +36,7 @@ struct UpdateTaskRequest: Encodable, Equatable {
     let priority: String
     let dueDate: String?
     let isCompleted: Bool
+    let subtasks: [RemoteSubtask]
 
     init(userId: String, task: Task, input: CreateTaskInput) {
         self.userId = userId
@@ -42,6 +45,7 @@ struct UpdateTaskRequest: Encodable, Equatable {
         self.priority = input.priority.apiValue
         self.dueDate = input.dueDate.map { APIDateFormatter.apiDateString(from: $0) }
         self.isCompleted = task.isCompleted
+        self.subtasks = input.subtasks.map(RemoteSubtask.init)
     }
 }
 
@@ -56,6 +60,7 @@ struct RemoteTask: Decodable {
     let priority: String
     let dueDate: String?
     let isCompleted: Bool
+    let subtasks: [RemoteSubtask]?
     let createdAt: String?
     let updatedAt: String?
 
@@ -68,6 +73,7 @@ struct RemoteTask: Decodable {
         priority: String,
         dueDate: String?,
         isCompleted: Bool,
+        subtasks: [RemoteSubtask]? = nil,
         createdAt: String?,
         updatedAt: String?
     ) {
@@ -79,6 +85,7 @@ struct RemoteTask: Decodable {
         self.priority = priority
         self.dueDate = dueDate
         self.isCompleted = isCompleted
+        self.subtasks = subtasks
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -91,6 +98,7 @@ struct RemoteTask: Decodable {
         case priority
         case dueDate
         case isCompleted
+        case subtasks
         case createdAt
         case updatedAt
         case updateAt
@@ -105,6 +113,7 @@ struct RemoteTask: Decodable {
         priority = try container.decode(String.self, forKey: .priority)
         dueDate = try container.decodeIfPresent(String.self, forKey: .dueDate)
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        subtasks = try container.decodeIfPresent([RemoteSubtask].self, forKey: .subtasks)
         createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
             ?? container.decodeIfPresent(String.self, forKey: .updateAt)
@@ -137,6 +146,7 @@ struct RemoteTask: Decodable {
             priority: TaskPriority.fromAPIValue(priority),
             dueDate: APIDateFormatter.parse(dueDate),
             isCompleted: isCompleted,
+            subtasks: subtasks?.compactMap { $0.toSubtask() } ?? [],
             createdAt: created,
             updatedAt: updated
         )

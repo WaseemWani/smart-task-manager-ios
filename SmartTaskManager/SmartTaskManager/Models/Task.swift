@@ -15,12 +15,37 @@ struct Task: Codable, Equatable, Identifiable {
     let priority: TaskPriority
     let dueDate: Date?
     let isCompleted: Bool
+    let subtasks: [Subtask]
     let createdAt: Date
     let updatedAt: Date
 
     var isEditable: Bool { serverID != nil }
 
     var isDeletable: Bool { serverID != nil }
+
+    init(
+        id: String,
+        serverID: String?,
+        title: String,
+        description: String?,
+        priority: TaskPriority,
+        dueDate: Date?,
+        isCompleted: Bool,
+        subtasks: [Subtask] = [],
+        createdAt: Date,
+        updatedAt: Date
+    ) {
+        self.id = id
+        self.serverID = serverID
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.dueDate = dueDate
+        self.isCompleted = isCompleted
+        self.subtasks = subtasks
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - TaskPriority
@@ -66,6 +91,21 @@ struct CreateTaskInput: Equatable {
     let description: String?
     let priority: TaskPriority
     let dueDate: Date?
+    let subtasks: [Subtask]
+
+    init(
+        title: String,
+        description: String?,
+        priority: TaskPriority,
+        dueDate: Date?,
+        subtasks: [Subtask] = []
+    ) {
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.dueDate = dueDate
+        self.subtasks = subtasks
+    }
 }
 
 // MARK: - TaskError

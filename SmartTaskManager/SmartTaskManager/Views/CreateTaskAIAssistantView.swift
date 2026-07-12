@@ -9,6 +9,10 @@ final class CreateTaskAIAssistantView: UIView {
 
     var onSuggestPriorityTapped: (() -> Void)?
     var onBreakIntoSubtasksTapped: (() -> Void)?
+    var onAddSubtaskTapped: (() -> Void)?
+    var onSubtaskToggle: ((String) -> Void)?
+    var onSubtaskTitleTap: ((String) -> Void)?
+    var onSubtaskDelete: ((String) -> Void)?
 
     private let gradientOverlayView: UIView = {
         let view = UIView()
@@ -117,9 +121,52 @@ final class CreateTaskAIAssistantView: UIView {
         return label
     }()
 
+    private let subtasksContainerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+
+    private let subtasksSeparatorView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .appOutlineVariantMuted
+        return view
+    }()
+
+    private let subtasksHeaderLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.footnote()
+        label.textColor = .appOutline
+        label.text = AppConstants.CreateTask.aiSuggestedSubtasksTitle
+        return label
+    }()
+
+    private let subtasksStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.spacing = AppConstants.CreateTask.Layout.subtaskRowSpacing
+        return stackView
+    }()
+
+    private lazy var addSubtaskButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle(AppConstants.CreateTask.addSubtask, for: .normal)
+        button.titleLabel?.font = AppFont.body()
+        button.setTitleColor(.appPrimary, for: .normal)
+        button.contentHorizontalAlignment = .leading
+        button.addTarget(self, action: #selector(addSubtaskTapped), for: .touchUpInside)
+        return button
+    }()
+
     private let gradientLayer = CAGradientLayer()
     private var isLoadingState = false
     private var isSuggestPriorityAllowed = false
+    private var isBreakIntoSubtasksAllowed = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -146,19 +193,53 @@ final class CreateTaskAIAssistantView: UIView {
             loadingIndicator.stopAnimating()
         }
 
-        updateSuggestPriorityButtonState()
+        updateActionButtonStates()
     }
 
     func setSuggestPriorityEnabled(_ isEnabled: Bool) {
         isSuggestPriorityAllowed = isEnabled
-        updateSuggestPriorityButtonState()
+        updateActionButtonStates()
     }
 
-    private func updateSuggestPriorityButtonState() {
-        let enabled = isSuggestPriorityAllowed && !isLoadingState
-        suggestPriorityButton.isEnabled = enabled
+    func setBreakIntoSubtasksEnabled(_ isEnabled: Bool) {
+        isBreakIntoSubtasksAllowed = isEnabled
+        updateActionButtonStates()
+    }
+
+    func configureSubtasks(_ subtasks: [Subtask], sectionTitle: String) {
+        subtasksContainerView.isHidden = subtasks.isEmpty
+        subtasksHeaderLabel.text = sectionTitle
+        subtasksStackView.arrangedSubviews.forEach { view in
+            subtasksStackView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        subtasks.forEach { subtask in
+            let rowView = CreateTaskSubtaskRowView()
+            rowView.configure(title: subtask.title, isCompleted: subtask.isCompleted)
+            rowView.onToggle = { [weak self] in
+                self?.onSubtaskToggle?(subtask.id)
+            }
+            rowView.onTitleTap = { [weak self] in
+                self?.onSubtaskTitleTap?(subtask.id)
+            }
+            rowView.onDelete = { [weak self] in
+                self?.onSubtaskDelete?(subtask.id)
+            }
+            subtasksStackView.addArrangedSubview(rowView)
+        }
+    }
+
+    private func updateActionButtonStates() {
+        let suggestEnabled = isSuggestPriorityAllowed && !isLoadingState
+        suggestPriorityButton.isEnabled = suggestEnabled
         suggestPriorityButton.alpha = isSuggestPriorityAllowed ? 1 : 0.5
-        breakIntoSubtasksButton.isEnabled = !isLoadingState
+
+        let breakEnabled = isBreakIntoSubtasksAllowed && !isLoadingState
+        breakIntoSubtasksButton.isEnabled = breakEnabled
+        breakIntoSubtasksButton.alpha = isBreakIntoSubtasksAllowed ? 1 : 0.5
+
+        addSubtaskButton.isEnabled = !isLoadingState
     }
 
     // MARK: - Private
@@ -187,6 +268,7 @@ final class CreateTaskAIAssistantView: UIView {
         contentStackView.addArrangedSubview(headerStackView)
         contentStackView.addArrangedSubview(actionsStackView)
         contentStackView.addArrangedSubview(loadingContainerView)
+        contentStackView.addArrangedSubview(subtasksContainerView)
 
         headerStackView.addArrangedSubview(sparkIconView)
         headerStackView.addArrangedSubview(titleLabel)
@@ -198,6 +280,11 @@ final class CreateTaskAIAssistantView: UIView {
         loadingContainerView.addSubview(loadingStackView)
         loadingStackView.addArrangedSubview(loadingIndicator)
         loadingStackView.addArrangedSubview(loadingLabel)
+
+        subtasksContainerView.addSubview(subtasksSeparatorView)
+        subtasksContainerView.addSubview(subtasksHeaderLabel)
+        subtasksContainerView.addSubview(subtasksStackView)
+        subtasksContainerView.addSubview(addSubtaskButton)
 
         let padding = AppConstants.CreateTask.Layout.aiCardPadding
         let layout = AppConstants.CreateTask.Layout.self
@@ -227,7 +314,28 @@ final class CreateTaskAIAssistantView: UIView {
             ),
             loadingStackView.leadingAnchor.constraint(equalTo: loadingContainerView.leadingAnchor),
             loadingStackView.trailingAnchor.constraint(equalTo: loadingContainerView.trailingAnchor),
-            loadingStackView.bottomAnchor.constraint(equalTo: loadingContainerView.bottomAnchor)
+            loadingStackView.bottomAnchor.constraint(equalTo: loadingContainerView.bottomAnchor),
+
+            subtasksSeparatorView.topAnchor.constraint(equalTo: subtasksContainerView.topAnchor),
+            subtasksSeparatorView.leadingAnchor.constraint(equalTo: subtasksContainerView.leadingAnchor),
+            subtasksSeparatorView.trailingAnchor.constraint(equalTo: subtasksContainerView.trailingAnchor),
+            subtasksSeparatorView.heightAnchor.constraint(equalToConstant: 1),
+
+            subtasksHeaderLabel.topAnchor.constraint(
+                equalTo: subtasksSeparatorView.bottomAnchor,
+                constant: layout.subtasksSectionTopPadding
+            ),
+            subtasksHeaderLabel.leadingAnchor.constraint(equalTo: subtasksContainerView.leadingAnchor),
+            subtasksHeaderLabel.trailingAnchor.constraint(equalTo: subtasksContainerView.trailingAnchor),
+
+            subtasksStackView.topAnchor.constraint(equalTo: subtasksHeaderLabel.bottomAnchor, constant: layout.subtaskRowSpacing),
+            subtasksStackView.leadingAnchor.constraint(equalTo: subtasksContainerView.leadingAnchor),
+            subtasksStackView.trailingAnchor.constraint(equalTo: subtasksContainerView.trailingAnchor),
+
+            addSubtaskButton.topAnchor.constraint(equalTo: subtasksStackView.bottomAnchor, constant: layout.addSubtaskTopSpacing),
+            addSubtaskButton.leadingAnchor.constraint(equalTo: subtasksContainerView.leadingAnchor),
+            addSubtaskButton.trailingAnchor.constraint(equalTo: subtasksContainerView.trailingAnchor),
+            addSubtaskButton.bottomAnchor.constraint(equalTo: subtasksContainerView.bottomAnchor)
         ])
 
         contentStackView.setCustomSpacing(layout.aiHeaderBottomSpacing, after: headerStackView)
@@ -286,5 +394,9 @@ final class CreateTaskAIAssistantView: UIView {
 
     @objc private func breakIntoSubtasksTapped() {
         onBreakIntoSubtasksTapped?()
+    }
+
+    @objc private func addSubtaskTapped() {
+        onAddSubtaskTapped?()
     }
 }
