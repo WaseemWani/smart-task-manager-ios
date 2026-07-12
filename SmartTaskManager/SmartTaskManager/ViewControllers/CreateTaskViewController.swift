@@ -75,6 +75,7 @@ final class CreateTaskViewController: UIViewController {
     }()
 
     private let titleErrorLabel = CreateTaskViewController.makeErrorLabel()
+    private let descriptionErrorLabel = CreateTaskViewController.makeErrorLabel()
     private let dueDateErrorLabel = CreateTaskViewController.makeErrorLabel()
     private let priorityErrorLabel = CreateTaskViewController.makeErrorLabel()
     private let submitErrorLabel = CreateTaskViewController.makeErrorLabel()
@@ -118,6 +119,7 @@ final class CreateTaskViewController: UIViewController {
     }()
 
     private var activeDatePicker: UIDatePicker?
+    private var submitErrorTopToAIConstraint: NSLayoutConstraint!
 
     // MARK: - Initialization
 
@@ -172,6 +174,7 @@ final class CreateTaskViewController: UIViewController {
 
         [
             titleErrorLabel,
+            descriptionErrorLabel,
             dueDateErrorLabel,
             priorityErrorLabel,
             submitErrorLabel
@@ -189,6 +192,27 @@ final class CreateTaskViewController: UIViewController {
         aiAssistantView.onSuggestPriorityTapped = { [weak self] in
             self?.view.endEditing(true)
             self?.viewModel.suggestPriority()
+        }
+
+        aiAssistantView.onBreakIntoSubtasksTapped = { [weak self] in
+            self?.view.endEditing(true)
+            self?.viewModel.breakIntoSubtasks()
+        }
+
+        aiAssistantView.onAddSubtaskTapped = { [weak self] in
+            self?.presentSubtaskEditor(subtaskID: nil)
+        }
+
+        aiAssistantView.onSubtaskToggle = { [weak self] id in
+            self?.viewModel.toggleSubtask(id: id)
+        }
+
+        aiAssistantView.onSubtaskTitleTap = { [weak self] id in
+            self?.presentSubtaskEditor(subtaskID: id)
+        }
+
+        aiAssistantView.onSubtaskDelete = { [weak self] id in
+            self?.viewModel.deleteSubtask(id: id)
         }
 
         styleCard(detailsCardView)
@@ -242,7 +266,11 @@ final class CreateTaskViewController: UIViewController {
             titleErrorLabel.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor),
             titleErrorLabel.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor),
 
-            optionsCardView.topAnchor.constraint(equalTo: titleErrorLabel.bottomAnchor, constant: stackGap * 2),
+            descriptionErrorLabel.topAnchor.constraint(equalTo: titleErrorLabel.bottomAnchor, constant: 2),
+            descriptionErrorLabel.leadingAnchor.constraint(equalTo: detailsCardView.leadingAnchor),
+            descriptionErrorLabel.trailingAnchor.constraint(equalTo: detailsCardView.trailingAnchor),
+
+            optionsCardView.topAnchor.constraint(equalTo: descriptionErrorLabel.bottomAnchor, constant: stackGap * 2),
             optionsCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
             optionsCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
 
@@ -275,7 +303,6 @@ final class CreateTaskViewController: UIViewController {
             aiAssistantView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
             aiAssistantView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
 
-            submitErrorLabel.topAnchor.constraint(equalTo: aiAssistantView.bottomAnchor, constant: stackGap),
             submitErrorLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: margin),
             submitErrorLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
 
@@ -288,6 +315,12 @@ final class CreateTaskViewController: UIViewController {
             saveActivityIndicator.centerXAnchor.constraint(equalTo: saveButton.centerXAnchor),
             saveActivityIndicator.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor)
         ])
+
+        submitErrorTopToAIConstraint = submitErrorLabel.topAnchor.constraint(
+            equalTo: aiAssistantView.bottomAnchor,
+            constant: stackGap
+        )
+        submitErrorTopToAIConstraint.isActive = true
     }
 
     private func configureUI() {
@@ -352,6 +385,10 @@ final class CreateTaskViewController: UIViewController {
             guard let self else { return }
             ToastBannerView.show(in: self.view, message: message)
         }
+
+        viewModel.onRegenerateConfirmationRequired = { [weak self] in
+            self?.presentRegenerateConfirmation()
+        }
     }
 
     // MARK: - State
@@ -372,6 +409,9 @@ final class CreateTaskViewController: UIViewController {
         titleErrorLabel.text = state.titleError
         titleErrorLabel.isHidden = state.titleError == nil
 
+        descriptionErrorLabel.text = state.descriptionError
+        descriptionErrorLabel.isHidden = state.descriptionError == nil
+
         dueDateErrorLabel.text = state.dueDateError
         dueDateErrorLabel.isHidden = state.dueDateError == nil
 
@@ -381,8 +421,13 @@ final class CreateTaskViewController: UIViewController {
         submitErrorLabel.text = state.submitError
         submitErrorLabel.isHidden = state.submitError == nil
 
-        aiAssistantView.setLoading(state.isSuggestingPriority)
+        aiAssistantView.setLoading(state.isAILoading)
         aiAssistantView.setSuggestPriorityEnabled(state.isSuggestPriorityEnabled)
+        aiAssistantView.setBreakIntoSubtasksEnabled(state.isBreakIntoSubtasksEnabled)
+        aiAssistantView.configureSubtasks(
+            state.subtasks,
+            sectionTitle: subtasksSectionTitle(for: state.subtasks)
+        )
 
         saveButton.isEnabled = state.isSaveEnabled
 
@@ -545,6 +590,60 @@ final class CreateTaskViewController: UIViewController {
     }
 
     // MARK: - Helpers
+
+    private func presentRegenerateConfirmation() {
+        let alert = UIAlertController(
+            title: AppConstants.CreateTask.regenerateSubtasksTitle,
+            message: AppConstants.CreateTask.regenerateSubtasksMessage,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: AppConstants.CreateTask.replaceAction, style: .destructive) { [weak self] _ in
+            self?.viewModel.confirmRegenerateSubtasks()
+        })
+        present(alert, animated: true)
+    }
+
+    private func presentSubtaskEditor(subtaskID: String?) {
+        view.endEditing(true)
+
+        let existingTitle: String
+        if let subtaskID,
+           let subtask = viewModel.state.subtasks.first(where: { $0.id == subtaskID }) {
+            existingTitle = subtask.title
+        } else {
+            existingTitle = ""
+        }
+
+        let editor = SubtaskEditViewController(
+            title: existingTitle,
+            isNewSubtask: subtaskID == nil
+        )
+        editor.onSave = { [weak self] title in
+            guard let self else { return }
+            if let subtaskID {
+                self.viewModel.updateSubtaskTitle(id: subtaskID, title: title)
+            } else {
+                self.viewModel.insertSubtask(title: title)
+            }
+        }
+
+        let navigationController = UINavigationController(rootViewController: editor)
+        navigationController.modalPresentationStyle = .pageSheet
+        if let sheet = navigationController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.selectedDetentIdentifier = .large
+            sheet.prefersGrabberVisible = true
+        }
+
+        present(navigationController, animated: true)
+    }
+
+    private func subtasksSectionTitle(for subtasks: [Subtask]) -> String {
+        viewModel.isEditing
+            ? AppConstants.CreateTask.subtasksSectionTitle
+            : AppConstants.CreateTask.aiSuggestedSubtasksTitle
+    }
 
     private func presentDeleteConfirmation(handler: @escaping () -> Void) {
         let alert = UIAlertController(

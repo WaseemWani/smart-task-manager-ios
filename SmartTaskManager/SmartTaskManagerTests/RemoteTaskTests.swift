@@ -93,6 +93,52 @@ final class RemoteTaskTests: XCTestCase {
         XCTAssertEqual(json["priority"] as? String, "Medium")
         XCTAssertEqual(json["dueDate"] as? String, "2026-07-20")
         XCTAssertEqual(json["isCompleted"] as? Bool, false)
+        XCTAssertEqual(json["subtasks"] as? [[String: Any]], [])
+    }
+
+    func testCreateTaskRequestEncodesSubtasks() throws {
+        let request = CreateTaskRequest(
+            userId: "1",
+            input: CreateTaskInput(
+                title: "Test Task",
+                description: "Testing API",
+                priority: .medium,
+                dueDate: nil,
+                subtasks: [
+                    Subtask(title: "Step 1", isCompleted: false),
+                    Subtask(title: "Step 2", isCompleted: true)
+                ]
+            )
+        )
+
+        let data = try JSONEncoder().encode(request)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let subtasks = try XCTUnwrap(json["subtasks"] as? [[String: Any]])
+
+        XCTAssertEqual(subtasks.count, 2)
+        XCTAssertEqual(subtasks[0]["title"] as? String, "Step 1")
+        XCTAssertEqual(subtasks[0]["isCompleted"] as? Bool, false)
+        XCTAssertEqual(subtasks[1]["title"] as? String, "Step 2")
+        XCTAssertEqual(subtasks[1]["isCompleted"] as? Bool, true)
+    }
+
+    func testRemoteTaskDecodesSubtasks() throws {
+        let json = """
+        {
+          "id": "1",
+          "title": "Sample Task",
+          "priority": "High",
+          "isCompleted": false,
+          "subtasks": [
+            { "title": "Draft summary", "isCompleted": false }
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let remoteTask = try JSONDecoder().decode(RemoteTask.self, from: json)
+
+        XCTAssertEqual(remoteTask.toTask()?.subtasks.count, 1)
+        XCTAssertEqual(remoteTask.toTask()?.subtasks.first?.title, "Draft summary")
     }
 
     func testUpdateTaskRequestEncodesExpectedPayload() throws {

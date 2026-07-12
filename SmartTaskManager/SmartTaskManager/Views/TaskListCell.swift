@@ -39,6 +39,16 @@ final class TaskListCell: UITableViewCell {
 
     private let priorityBadgeView = PriorityBadgeView()
 
+    private let metadataStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.spacing = AppConstants.TaskList.Layout.stackGap
+        return stackView
+    }()
+
+    private let dueDateRow = UIView()
+
     private let dueDateIconView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -55,10 +65,25 @@ final class TaskListCell: UITableViewCell {
         return label
     }()
 
-    private let dueDateRow = UIView()
+    private let subtasksRow = UIView()
 
-    private var cardBottomToDueDateConstraint: NSLayoutConstraint!
-    private var cardBottomToTitleConstraint: NSLayoutConstraint!
+    private let subtasksIconView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = .appOutline
+        let configuration = UIImage.SymbolConfiguration(pointSize: AppConstants.TaskList.Layout.dueDateIconSize, weight: .regular)
+        imageView.image = UIImage(systemName: "list.bullet.indent", withConfiguration: configuration)
+        return imageView
+    }()
+
+    private let subtasksLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = AppFont.footnote()
+        label.textColor = .appOutline
+        return label
+    }()
 
     // MARK: - Initialization
 
@@ -96,12 +121,15 @@ final class TaskListCell: UITableViewCell {
             dueDateIconView.image = UIImage(systemName: dueDatePresentation.systemIconName)
             dueDateLabel.text = dueDatePresentation.text
             dueDateRow.isHidden = false
-            cardBottomToDueDateConstraint.isActive = true
-            cardBottomToTitleConstraint.isActive = false
         } else {
             dueDateRow.isHidden = true
-            cardBottomToDueDateConstraint.isActive = false
-            cardBottomToTitleConstraint.isActive = true
+        }
+
+        if task.subtasks.isEmpty {
+            subtasksRow.isHidden = true
+        } else {
+            subtasksRow.isHidden = false
+            subtasksLabel.text = AppConstants.TaskList.subtaskCountLabel(for: task.subtasks.count)
         }
 
         contentView.alpha = task.isCompleted ? 0.9 : 1
@@ -111,14 +139,21 @@ final class TaskListCell: UITableViewCell {
 
     private func setupViews() {
         dueDateRow.translatesAutoresizingMaskIntoConstraints = false
+        subtasksRow.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.addSubview(cardView)
         cardView.addSubview(checkboxView)
         cardView.addSubview(titleLabel)
         cardView.addSubview(priorityBadgeView)
-        cardView.addSubview(dueDateRow)
+        cardView.addSubview(metadataStackView)
+
+        metadataStackView.addArrangedSubview(dueDateRow)
+        metadataStackView.addArrangedSubview(subtasksRow)
+
         dueDateRow.addSubview(dueDateIconView)
         dueDateRow.addSubview(dueDateLabel)
+        subtasksRow.addSubview(subtasksIconView)
+        subtasksRow.addSubview(subtasksLabel)
     }
 
     private func setupConstraints() {
@@ -154,9 +189,10 @@ final class TaskListCell: UITableViewCell {
             ),
             priorityBadgeView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -gutter),
 
-            dueDateRow.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: stackGap),
-            dueDateRow.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            dueDateRow.trailingAnchor.constraint(lessThanOrEqualTo: cardView.trailingAnchor, constant: -gutter),
+            metadataStackView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: stackGap),
+            metadataStackView.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            metadataStackView.trailingAnchor.constraint(lessThanOrEqualTo: cardView.trailingAnchor, constant: -gutter),
+            metadataStackView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -gutter),
 
             dueDateIconView.leadingAnchor.constraint(equalTo: dueDateRow.leadingAnchor),
             dueDateIconView.centerYAnchor.constraint(equalTo: dueDateRow.centerYAnchor),
@@ -167,18 +203,19 @@ final class TaskListCell: UITableViewCell {
 
             dueDateLabel.leadingAnchor.constraint(equalTo: dueDateIconView.trailingAnchor, constant: 4),
             dueDateLabel.trailingAnchor.constraint(equalTo: dueDateRow.trailingAnchor),
-            dueDateLabel.centerYAnchor.constraint(equalTo: dueDateRow.centerYAnchor)
-        ])
+            dueDateLabel.centerYAnchor.constraint(equalTo: dueDateRow.centerYAnchor),
 
-        cardBottomToDueDateConstraint = dueDateRow.bottomAnchor.constraint(
-            equalTo: cardView.bottomAnchor,
-            constant: -gutter
-        )
-        cardBottomToTitleConstraint = titleLabel.bottomAnchor.constraint(
-            equalTo: cardView.bottomAnchor,
-            constant: -gutter
-        )
-        cardBottomToDueDateConstraint.isActive = true
+            subtasksIconView.leadingAnchor.constraint(equalTo: subtasksRow.leadingAnchor),
+            subtasksIconView.centerYAnchor.constraint(equalTo: subtasksRow.centerYAnchor),
+            subtasksIconView.widthAnchor.constraint(equalToConstant: iconSize),
+            subtasksIconView.heightAnchor.constraint(equalToConstant: iconSize),
+            subtasksIconView.topAnchor.constraint(equalTo: subtasksRow.topAnchor),
+            subtasksIconView.bottomAnchor.constraint(equalTo: subtasksRow.bottomAnchor),
+
+            subtasksLabel.leadingAnchor.constraint(equalTo: subtasksIconView.trailingAnchor, constant: 4),
+            subtasksLabel.trailingAnchor.constraint(equalTo: subtasksRow.trailingAnchor),
+            subtasksLabel.centerYAnchor.constraint(equalTo: subtasksRow.centerYAnchor)
+        ])
     }
 
     private func applyCardShadow() {

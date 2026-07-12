@@ -93,6 +93,13 @@ enum AppConstants {
         static let emptyTitle = "No tasks yet"
         static let emptyMessage = "Your tasks will appear here once you create them."
         static let retryButton = "Try Again"
+        static let subtaskSingular = "subtask"
+        static let subtaskPlural = "subtasks"
+
+        static func subtaskCountLabel(for count: Int) -> String {
+            let noun = count == 1 ? subtaskSingular : subtaskPlural
+            return "\(count) \(noun)"
+        }
 
         enum Layout {
             static let marginMain: CGFloat = 16
@@ -148,6 +155,18 @@ enum AppConstants {
         static let breakIntoSubtasks = "Break Into Subtasks"
         static let generatingAISuggestions = "Generating AI Suggestions..."
         static let titleRequiredForAI = "Add a title before using AI suggestions."
+        static let descriptionRequiredForAI = "Add a description before breaking into subtasks."
+        static let aiSuggestedSubtasksTitle = "AI SUGGESTED SUBTASKS"
+        static let subtasksSectionTitle = "SUBTASKS"
+        static let addSubtask = "Add Subtask"
+        static let editSubtaskTitle = "Edit Subtask"
+        static let newSubtaskTitle = "New Subtask"
+        static let subtaskTitlePlaceholder = "Subtask title"
+        static let subtaskUntitledPlaceholder = "Tap to add title"
+        static let saveSubtask = "Save"
+        static let regenerateSubtasksTitle = "Replace Subtasks?"
+        static let regenerateSubtasksMessage = "This will replace your current subtasks with new AI suggestions."
+        static let replaceAction = "Replace"
 
         enum Layout {
             static let pickerHeaderTopPadding: CGFloat = 16
@@ -169,6 +188,13 @@ enum AppConstants {
             static let aiLoadingSpacing: CGFloat = 12
             static let aiSparkIconSize: CGFloat = 20
             static let aiActionIconSize: CGFloat = 24
+            static let subtaskRowSpacing: CGFloat = 12
+            static let subtaskCheckboxSize: CGFloat = 20
+            static let subtaskDeleteIconSize: CGFloat = 18
+            static let subtasksSectionTopSpacing: CGFloat = 24
+            static let subtasksSectionTopPadding: CGFloat = 16
+            static let addSubtaskTopSpacing: CGFloat = 12
+            static let subtaskEditMinTextHeight: CGFloat = 120
         }
     }
 
@@ -188,6 +214,8 @@ enum AppConstants {
         static let emptyResponse = "The AI service returned an empty response."
         static let unrecognizedPriority = "Unable to determine a valid priority from the AI response."
         static let insufficientSubtasks = "The AI response did not include enough subtasks."
+        static let noEligibleTasks = "Add incomplete tasks to get AI workload insights."
+        static let invalidWorkloadInsight = "Unable to read a valid workload insight from the AI response."
         static let unknown = "Something went wrong with the AI request. Please try again."
         static let prioritySuggested = "Priority suggested successfully."
         static let subtasksGenerated = "Subtasks generated successfully."

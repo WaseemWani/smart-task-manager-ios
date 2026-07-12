@@ -12,7 +12,9 @@ struct CreateTaskViewState: Equatable {
     var description: String = ""
     var priority: TaskPriority?
     var dueDate: Date?
+    var subtasks: [Subtask] = []
     var titleError: String?
+    var descriptionError: String?
     var priorityError: String?
     var dueDateError: String?
     var submitError: String?
@@ -20,7 +22,13 @@ struct CreateTaskViewState: Equatable {
     var isLoading: Bool = false
     var isSaveEnabled: Bool = false
     var isSuggestingPriority: Bool = false
+    var isGeneratingSubtasks: Bool = false
     var isSuggestPriorityEnabled: Bool = false
+    var isBreakIntoSubtasksEnabled: Bool = false
+
+    var isAILoading: Bool {
+        isSuggestingPriority || isGeneratingSubtasks
+    }
 }
 
 // MARK: - CreateTaskViewModel
@@ -35,6 +43,7 @@ final class CreateTaskViewModel {
     var onDeleteSuccess: (() -> Void)?
     var onAISuccess: ((String) -> Void)?
     var onAIError: ((String) -> Void)?
+    var onRegenerateConfirmationRequired: (() -> Void)?
 
     // MARK: - State
 
@@ -82,6 +91,7 @@ final class CreateTaskViewModel {
             state.description = task.description ?? ""
             state.priority = task.priority
             state.dueDate = task.dueDate
+            state.subtasks = task.subtasks
         }
 
         updateSaveEnabledState()
@@ -94,12 +104,12 @@ final class CreateTaskViewModel {
             return
         }
 
-        guard !state.isSuggestingPriority, !state.isLoading else { return }
+        guard !state.isAILoading, !state.isLoading else { return }
 
         state.isSuggestingPriority = true
         state.titleError = nil
         state.submitError = nil
-        updateSuggestPriorityEnabledState()
+        updateAIEnabledStates()
 
         let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -111,7 +121,7 @@ final class CreateTaskViewModel {
                 guard let self else { return }
 
                 self.state.isSuggestingPriority = false
-                self.updateSuggestPriorityEnabledState()
+                self.updateAIEnabledStates()
 
                 switch result {
                 case .success(let priority):
@@ -126,6 +136,49 @@ final class CreateTaskViewModel {
         }
     }
 
+    func breakIntoSubtasks() {
+        guard validateBreakdownInput() else { return }
+        guard !state.subtasks.isEmpty else {
+            performBreakIntoSubtasks()
+            return
+        }
+        onRegenerateConfirmationRequired?()
+    }
+
+    func confirmRegenerateSubtasks() {
+        guard validateBreakdownInput() else { return }
+        performBreakIntoSubtasks()
+    }
+
+    func addSubtask(title: String = "") {
+        state.subtasks.append(Subtask(title: title))
+        updateSaveEnabledState()
+    }
+
+    func insertSubtask(title: String) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+        state.subtasks.append(Subtask(title: trimmedTitle))
+        updateSaveEnabledState()
+    }
+
+    func toggleSubtask(id: String) {
+        guard let index = state.subtasks.firstIndex(where: { $0.id == id }) else { return }
+        state.subtasks[index].isCompleted.toggle()
+        updateSaveEnabledState()
+    }
+
+    func updateSubtaskTitle(id: String, title: String) {
+        guard let index = state.subtasks.firstIndex(where: { $0.id == id }) else { return }
+        state.subtasks[index].title = title
+        updateSaveEnabledState()
+    }
+
+    func deleteSubtask(id: String) {
+        state.subtasks.removeAll { $0.id == id }
+        updateSaveEnabledState()
+    }
+
     // MARK: - Input
 
     func updateTitle(_ title: String) {
@@ -138,6 +191,7 @@ final class CreateTaskViewModel {
 
     func updateDescription(_ description: String) {
         state.description = description
+        state.descriptionError = nil
         state.submitError = nil
         state.successMessage = nil
         updateSaveEnabledState()
@@ -190,7 +244,8 @@ final class CreateTaskViewModel {
             title: trimmedTitle,
             description: trimmedDescription.isEmpty ? nil : trimmedDescription,
             priority: priority,
-            dueDate: state.dueDate
+            dueDate: state.dueDate,
+            subtasks: sanitizedSubtasks()
         )
 
         state.isLoading = true
@@ -231,6 +286,75 @@ final class CreateTaskViewModel {
     }
 
     // MARK: - Private
+
+    private func performBreakIntoSubtasks() {
+        guard !state.isAILoading, !state.isLoading else { return }
+
+        let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        state.isGeneratingSubtasks = true
+        state.titleError = nil
+        state.descriptionError = nil
+        state.submitError = nil
+        updateAIEnabledStates()
+
+        aiService.generateSubtasks(
+            title: trimmedTitle,
+            description: trimmedDescription
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                self.state.isGeneratingSubtasks = false
+                self.updateAIEnabledStates()
+
+                switch result {
+                case .success(let titles):
+                    self.state.subtasks = titles.map { Subtask(title: $0) }
+                    self.updateSaveEnabledState()
+                    self.onAISuccess?(AppConstants.AI.subtasksGenerated)
+                case .failure(let error):
+                    self.onAIError?(error.message)
+                }
+            }
+        }
+    }
+
+    private func validateBreakdownInput() -> Bool {
+        let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var isValid = true
+
+        if trimmedTitle.isEmpty {
+            state.titleError = AppConstants.CreateTask.titleRequiredForAI
+            isValid = false
+        } else {
+            state.titleError = nil
+        }
+
+        if trimmedDescription.isEmpty {
+            state.descriptionError = AppConstants.CreateTask.descriptionRequiredForAI
+            isValid = false
+        } else {
+            state.descriptionError = nil
+        }
+
+        return isValid
+    }
+
+    private func sanitizedSubtasks() -> [Subtask] {
+        state.subtasks
+            .map { subtask in
+                Subtask(
+                    id: subtask.id,
+                    title: subtask.title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    isCompleted: subtask.isCompleted
+                )
+            }
+            .filter { !$0.title.isEmpty }
+    }
 
     private func createTask(input: CreateTaskInput) {
         taskService.createTask(input: input) { [weak self] result in
@@ -280,14 +404,21 @@ final class CreateTaskViewModel {
             state.isSaveEnabled = hasRequiredFields
         }
 
-        updateSuggestPriorityEnabledState()
+        updateAIEnabledStates()
     }
 
-    private func updateSuggestPriorityEnabledState() {
+    private func updateAIEnabledStates() {
         let trimmedTitle = state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+
         state.isSuggestPriorityEnabled = !trimmedTitle.isEmpty
             && !state.isLoading
-            && !state.isSuggestingPriority
+            && !state.isAILoading
+
+        state.isBreakIntoSubtasksEnabled = !trimmedTitle.isEmpty
+            && !trimmedDescription.isEmpty
+            && !state.isLoading
+            && !state.isAILoading
     }
 
     private func hasChanges(from task: Task) -> Bool {
@@ -299,6 +430,7 @@ final class CreateTaskViewModel {
             || trimmedDescription != originalDescription
             || state.priority != task.priority
             || !Self.datesEqual(state.dueDate, task.dueDate)
+            || !Self.subtasksEqual(sanitizedSubtasks(), sanitizedSubtasks(from: task.subtasks))
     }
 
     private func dueDateValidationError(
@@ -328,5 +460,22 @@ final class CreateTaskViewModel {
         default:
             return false
         }
+    }
+
+    private static func subtasksEqual(_ lhs: [Subtask], _ rhs: [Subtask]) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+        return zip(lhs, rhs).allSatisfy { $0.title == $1.title && $0.isCompleted == $1.isCompleted }
+    }
+
+    private func sanitizedSubtasks(from subtasks: [Subtask]) -> [Subtask] {
+        subtasks
+            .map { subtask in
+                Subtask(
+                    id: subtask.id,
+                    title: subtask.title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    isCompleted: subtask.isCompleted
+                )
+            }
+            .filter { !$0.title.isEmpty }
     }
 }
