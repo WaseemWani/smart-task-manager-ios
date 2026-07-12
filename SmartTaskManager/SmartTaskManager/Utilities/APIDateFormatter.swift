@@ -7,15 +7,6 @@ import Foundation
 
 enum APIDateFormatter {
 
-    private static let dateOnlyFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-
     private static let iso8601FractionalFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -35,10 +26,29 @@ enum APIDateFormatter {
             return date
         }
 
-        return dateOnlyFormatter.date(from: value)
+        return parseDateOnly(value)
     }
 
-    static func apiDateString(from date: Date) -> String {
-        dateOnlyFormatter.string(from: date)
+    static func apiDateString(from date: Date, calendar: Calendar = .current) -> String {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        guard let year = components.year,
+              let month = components.month,
+              let day = components.day else {
+            return ""
+        }
+
+        return String(format: "%04d-%02d-%02d", year, month, day)
+    }
+
+    private static func parseDateOnly(_ value: String, calendar: Calendar = .current) -> Date? {
+        let parts = value.split(separator: "-")
+        guard parts.count == 3,
+              let year = Int(parts[0]),
+              let month = Int(parts[1]),
+              let day = Int(parts[2]) else {
+            return nil
+        }
+
+        return calendar.date(from: DateComponents(year: year, month: month, day: day))
     }
 }

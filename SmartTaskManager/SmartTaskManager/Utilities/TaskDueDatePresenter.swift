@@ -12,13 +12,6 @@ struct TaskDueDatePresentation: Equatable {
 
 enum TaskDueDatePresenter {
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -31,14 +24,15 @@ enum TaskDueDatePresenter {
 
         let calendar = Calendar.current
 
-        if calendar.isDateInToday(dueDate) {
+        if calendar.isDate(dueDate, inSameDayAs: referenceDate) {
             return TaskDueDatePresentation(
-                text: timeFormatter.string(from: dueDate),
-                systemIconName: "clock"
+                text: AppConstants.CreateTask.todayPrefix,
+                systemIconName: "calendar"
             )
         }
 
-        if calendar.isDateInTomorrow(dueDate) {
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: referenceDate)),
+           calendar.isDate(dueDate, inSameDayAs: tomorrow) {
             return TaskDueDatePresentation(
                 text: AppConstants.TaskList.tomorrow,
                 systemIconName: "calendar"
@@ -59,11 +53,12 @@ enum TaskDueDatePresenter {
         let calendar = Calendar.current
         let monthDay = monthDayFormatter.string(from: dueDate)
 
-        if calendar.isDateInToday(dueDate) {
+        if calendar.isDate(dueDate, inSameDayAs: referenceDate) {
             return ("\(AppConstants.CreateTask.todayPrefix), \(monthDay)", false)
         }
 
-        if calendar.isDateInTomorrow(dueDate) {
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: referenceDate)),
+           calendar.isDate(dueDate, inSameDayAs: tomorrow) {
             return ("\(AppConstants.TaskList.tomorrow), \(monthDay)", false)
         }
 

@@ -77,6 +77,9 @@ enum AppConstants {
         static let createFailed = "Unable to create task. Please try again."
         static let notLoggedIn = "You must be logged in to manage tasks."
         static let createSuccess = "Task created successfully"
+        static let updateSuccess = "Task updated successfully"
+        static let updateFailed = "Unable to update task. Please try again."
+        static let taskNotEditable = "This task can't be edited because it isn't saved on the server yet."
         static let tomorrow = "Tomorrow"
         static let emptyTitle = "No tasks yet"
         static let emptyMessage = "Your tasks will appear here once you create them."
@@ -104,6 +107,11 @@ enum AppConstants {
             static let optionRowHeight: CGFloat = 44
             static let saveButtonHeight: CGFloat = 50
         }
+    }
+
+    enum EditTask {
+        static let screenTitle = "Edit Task"
+        static let saveButton = "Save Changes"
     }
 
     enum CreateTask {

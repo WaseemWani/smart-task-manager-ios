@@ -19,6 +19,7 @@ final class TaskTests: XCTestCase {
         let dueDate = Date(timeIntervalSince1970: 1_700_086_400)
         let task = Task(
             id: "1",
+            serverID: "1",
             title: "Quarterly review report",
             description: "Prepare Q1 summary",
             priority: .high,

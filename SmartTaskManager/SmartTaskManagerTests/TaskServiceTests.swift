@@ -33,6 +33,7 @@ final class TaskServiceTests: XCTestCase {
         networkManager.fetchTasksResult = .success([
             RemoteTask(
                 id: "1",
+                serverID: "1",
                 userId: "1",
                 title: "Prepare AI Demo",
                 description: "Demo description",
@@ -79,6 +80,7 @@ final class TaskServiceTests: XCTestCase {
         networkManager.createTaskResult = .success(
             RemoteTask(
                 id: "2",
+                serverID: "2",
                 userId: "1",
                 title: "Test Task",
                 description: "Testing API",
@@ -132,6 +134,121 @@ final class TaskServiceTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
         XCTAssertNil(networkManager.requestedEndpoint)
     }
+
+    func testUpdateTaskPutsRequestAndReturnsTask() {
+        sessionManager.user = User(id: "1", name: "Demo User", email: "user@email.com")
+        networkManager.updateTaskResult = .success(
+            RemoteTask(
+                id: "2",
+                serverID: "2",
+                userId: "1",
+                title: "Updated Task",
+                description: "Updated description",
+                priority: "High",
+                dueDate: "2026-07-25",
+                isCompleted: true,
+                createdAt: "2026-07-10T19:03:53.195Z",
+                updatedAt: "2026-07-11T20:13:52.292Z"
+            )
+        )
+
+        let existingTask = Task(
+            id: "2",
+            serverID: "2",
+            title: "Test Task",
+            description: "Testing API",
+            priority: .medium,
+            dueDate: APIDateFormatter.parse("2026-07-20"),
+            isCompleted: true,
+            createdAt: APIDateFormatter.parse("2026-07-10T19:03:53.195Z")!,
+            updatedAt: APIDateFormatter.parse("2026-07-10T20:13:52.292Z")!
+        )
+
+        let input = CreateTaskInput(
+            title: "Updated Task",
+            description: "Updated description",
+            priority: .high,
+            dueDate: APIDateFormatter.parse("2026-07-25")
+        )
+
+        let expectation = expectation(description: "Update task succeeds")
+        taskService.updateTask(task: existingTask, input: input) { result in
+            switch result {
+            case .success(let task):
+                XCTAssertEqual(task.id, "2")
+                XCTAssertEqual(task.title, "Updated Task")
+                XCTAssertEqual(task.priority, .high)
+                XCTAssertTrue(task.isCompleted)
+            case .failure:
+                XCTFail("Expected successful update")
+            }
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1)
+        XCTAssertEqual(networkManager.requestedEndpoint?.method, .put)
+        XCTAssertEqual(networkManager.requestedEndpoint?.path, "/tasks/2")
+    }
+
+    func testUpdateTaskFailsWhenUserNotLoggedIn() {
+        let existingTask = Task(
+            id: "2",
+            serverID: "2",
+            title: "Test Task",
+            description: nil,
+            priority: .low,
+            dueDate: nil,
+            isCompleted: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        let input = CreateTaskInput(
+            title: "Updated Task",
+            description: nil,
+            priority: .low,
+            dueDate: nil
+        )
+
+        let expectation = expectation(description: "Update task requires login")
+        taskService.updateTask(task: existingTask, input: input) { result in
+            XCTAssertEqual(result, .failure(.notLoggedIn))
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1)
+        XCTAssertNil(networkManager.requestedEndpoint)
+    }
+
+    func testUpdateTaskFailsWhenTaskNotEditable() {
+        let existingTask = Task(
+            id: "task-local",
+            serverID: nil,
+            title: "Test Task",
+            description: nil,
+            priority: .low,
+            dueDate: nil,
+            isCompleted: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        let input = CreateTaskInput(
+            title: "Updated Task",
+            description: nil,
+            priority: .low,
+            dueDate: nil
+        )
+
+        let expectation = expectation(description: "Update task requires server id")
+        taskService.updateTask(task: existingTask, input: input) { result in
+            XCTAssertEqual(result, .failure(.taskNotEditable))
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1)
+        XCTAssertNil(networkManager.requestedEndpoint)
+    }
 }
 
 // MARK: - MockTaskNetworkManager
@@ -141,6 +258,7 @@ private final class MockTaskNetworkManager: NetworkManaging {
     var requestedEndpoint: APIEndpoint?
     var fetchTasksResult: Result<[RemoteTask], NetworkError> = .success([])
     var createTaskResult: Result<RemoteTask, NetworkError> = .failure(.noData)
+    var updateTaskResult: Result<RemoteTask, NetworkError> = .failure(.noData)
 
     func request<T: Decodable>(
         endpoint: APIEndpoint,
@@ -155,7 +273,11 @@ private final class MockTaskNetworkManager: NetworkManaging {
         }
 
         if responseType == RemoteTask.self {
-            completion(createTaskResult.map { $0 as! T })
+            if endpoint.method == .put {
+                completion(updateTaskResult.map { $0 as! T })
+            } else {
+                completion(createTaskResult.map { $0 as! T })
+            }
             return
         }
 
