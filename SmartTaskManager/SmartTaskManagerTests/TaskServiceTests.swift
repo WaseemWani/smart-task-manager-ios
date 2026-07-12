@@ -33,6 +33,7 @@ final class TaskServiceTests: XCTestCase {
         networkManager.fetchTasksResult = .success([
             RemoteTask(
                 id: "1",
+                serverID: "1",
                 userId: "1",
                 title: "Prepare AI Demo",
                 description: "Demo description",
@@ -79,6 +80,7 @@ final class TaskServiceTests: XCTestCase {
         networkManager.createTaskResult = .success(
             RemoteTask(
                 id: "2",
+                serverID: "2",
                 userId: "1",
                 title: "Test Task",
                 description: "Testing API",
@@ -138,6 +140,7 @@ final class TaskServiceTests: XCTestCase {
         networkManager.updateTaskResult = .success(
             RemoteTask(
                 id: "2",
+                serverID: "2",
                 userId: "1",
                 title: "Updated Task",
                 description: "Updated description",

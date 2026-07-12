@@ -61,7 +61,7 @@ struct RemoteTask: Decodable {
 
     init(
         id: String,
-        serverID: String? = nil,
+        serverID: String?,
         userId: String?,
         title: String,
         description: String?,
