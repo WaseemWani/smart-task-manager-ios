@@ -190,5 +190,37 @@ enum AppConstants {
         static let insufficientSubtasks = "The AI response did not include enough subtasks."
         static let unknown = "Something went wrong with the AI request. Please try again."
         static let prioritySuggested = "Priority suggested successfully."
+        static let subtasksGenerated = "Subtasks generated successfully."
+    }
+
+    enum AIAssistant {
+        static let screenTitle = "AI Task Assistant"
+        static let analyzingWorkload = "Analyzing your workload..."
+        static let emptyTitle = "No tasks to analyze"
+        static let emptyMessage = "Add incomplete tasks to get AI workload insights."
+        static let applySuccess = "Suggestions applied successfully."
+        static let recommendedTaskUnavailable = "The recommended task is no longer available."
+        static let taskNotEditable = "This task can't be updated because it isn't saved on the server yet."
+        static let replaceSubtasksTitle = "Replace Subtasks?"
+        static let replaceSubtasksMessage = "This will replace the existing subtasks on the recommended task."
+        static let replaceAction = "Replace"
+        static let applySuggestions = "Apply Suggestions"
+        static let regenerate = "Regenerate"
+        static let smartSummary = "Smart Summary"
+        static let suggestedBreakdown = "Suggested Breakdown"
+        static let recommendedPriorityPrefix = "Recommended:"
+        static let retryButton = "Try Again"
+
+        enum Layout {
+            static let marginMain: CGFloat = 16
+            static let sectionSpacing: CGFloat = 24
+            static let stackGap: CGFloat = 8
+            static let contentTopSpacing: CGFloat = 24
+            static let contentBottomPadding: CGFloat = 32
+            static let actionButtonHeight: CGFloat = 56
+            static let actionButtonSpacing: CGFloat = 12
+            static let actionSectionTopSpacing: CGFloat = 16
+            static let loadingSpacing: CGFloat = 12
+        }
     }
 }
