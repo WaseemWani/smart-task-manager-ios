@@ -39,11 +39,16 @@ final class TaskListViewModel {
     // MARK: - Dependencies
 
     private let taskService: TaskServicing
+    private let taskCache: TaskCaching
 
     // MARK: - Initialization
 
-    init(taskService: TaskServicing = TaskService()) {
+    init(
+        taskService: TaskServicing = TaskService(),
+        taskCache: TaskCaching = TaskCache.shared
+    ) {
         self.taskService = taskService
+        self.taskCache = taskCache
         loadTasks()
     }
 
@@ -114,6 +119,8 @@ final class TaskListViewModel {
     // MARK: - Private
 
     private func publishFilteredTasks() {
+        syncTaskCache()
+
         let filteredTasks = TaskFilter.filter(allTasks, by: selectedPriorityFilter)
 
         if allTasks.isEmpty {
@@ -132,6 +139,7 @@ final class TaskListViewModel {
             publishFilteredTasks()
         case .failure(let error):
             allTasks = []
+            syncTaskCache()
             state = .error(error.message)
         }
     }
@@ -168,5 +176,9 @@ final class TaskListViewModel {
             createdAt: task.createdAt,
             updatedAt: task.updatedAt
         )
+    }
+
+    private func syncTaskCache() {
+        taskCache.updateTasks(allTasks)
     }
 }

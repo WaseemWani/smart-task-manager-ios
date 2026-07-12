@@ -221,6 +221,42 @@ enum AppConstants {
         static let subtasksGenerated = "Subtasks generated successfully."
     }
 
+    enum Profile {
+        static let performanceOverview = "Performance Overview"
+        static let totalTasks = "Total Tasks"
+        static let completed = "Completed"
+        static let pending = "Pending"
+        static let preferences = "Preferences"
+        static let appSettings = "App Settings"
+        static let aiSettings = "AI Settings"
+        static let information = "Information"
+        static let about = "About"
+        static let supportHelpdesk = "Support Helpdesk"
+        static let logOut = "Log Out"
+        static let logoutConfirmTitle = "Log Out?"
+        static let logoutConfirmMessage = "You will be signed out of your account. Your tasks will remain saved."
+        static let logoutConfirmAction = "Log Out"
+        static let logoutCancel = "Cancel"
+        static let guestStatMessage = "No tasks"
+
+        enum Layout {
+            static let marginMain: CGFloat = 16
+            static let sectionSpacing: CGFloat = 24
+            static let stackGap: CGFloat = 8
+            static let contentTopSpacing: CGFloat = 8
+            static let contentBottomPadding: CGFloat = 32
+            static let statCardSpacing: CGFloat = 12
+            static let statCardCornerRadius: CGFloat = 12
+            static let statCardPadding: CGFloat = 12
+            static let statIconSize: CGFloat = 24
+            static let menuCardCornerRadius: CGFloat = 12
+            static let menuRowHeight: CGFloat = 44
+            static let menuIconSize: CGFloat = 20
+            static let logoutButtonHeight: CGFloat = 50
+            static let logoutTopSpacing: CGFloat = 8
+        }
+    }
+
     enum AIAssistant {
         static let screenTitle = "AI Task Assistant"
         static let analyzingWorkload = "Analyzing your workload..."
